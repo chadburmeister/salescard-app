@@ -1,0 +1,204 @@
+// SalesCard database schema
+//   - User: a sales rep who has signed up
+//   - Card: their public-facing scorecard (1:1 with User)
+//   - Quarter: one quarter of KPIs (8 quarters per card)
+//   - Employment: prior job history (pulled from LinkedIn)
+//   - VerificationRequest: a request to a verifier to confirm a set of quarters
+//   - NextAuth tables (Account / Session / VerificationToken) for OAuth
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_PRISMA_URL") // pooled URL — used at runtime
+  directUrl = env("POSTGRES_URL_NON_POOLING") // direct URL — used for migrations
+}
+
+// =================== NextAuth tables ===================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// =================== Core domain ===================
+
+enum SalesRole {
+  SDR
+  BDR
+  AE
+}
+
+enum CardVisibility {
+  PRIVATE     // only the rep can see
+  UNLISTED    // anyone with the link can see
+  PUBLIC      // discoverable / indexed
+}
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  name            String?
+  image           String?    // LinkedIn profile photo
+  linkedinId      String?   @unique
+  linkedinUrl     String?
+  currentTitle    String?
+  currentCompany  String?
+  role            SalesRole?
+  emailVerified   DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  accounts        Account[]
+  sessions        Session[]
+  card            Card?
+  employments     Employment[]
+}
+
+model Card {
+  id              String          @id @default(cuid())
+  userId          String          @unique
+  username        String          @unique  // slug for public URL: salescard.ai/u/<username>
+  visibility      CardVisibility  @default(UNLISTED)
+
+  // computed score + tier (updated when KPIs change)
+  score           Int?            // 0-100
+  tier            String?         // PRISTINE | ELITE | PRO | DEV
+  percentile      Int?            // 0-100, vs role-segment peers
+
+  // privacy toggles
+  showRawKpis     Boolean         @default(true)   // show actual $ amounts on public view
+  showEmployer    Boolean         @default(true)   // show current employer
+  recruiterOptIn  Boolean         @default(false)  // visible in recruiter search
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quarters        Quarter[]
+  verifications   VerificationRequest[]
+
+  @@index([visibility, score])
+  @@index([recruiterOptIn, score])
+}
+
+model Quarter {
+  id                  String    @id @default(cuid())
+  cardId              String
+  period              String    // "Q3 24"
+  fiscalYear          Int       // 2024
+  fiscalQuarter       Int       // 3
+
+  // BDR/SDR fields (nullable for AEs)
+  dials               Int?
+  connects            Int?
+  conversations       Int?
+
+  // Shared fields
+  meetingsBooked      Int?
+  opportunitiesCreated Int?
+  pipelineDollars     BigInt?   // $ generated this Q
+
+  // AE-only fields (nullable for BDR/SDR)
+  closedWonDollars    BigInt?
+  quotaAttainmentPct  Float?    // 138.0 = 138%
+  winRatePct          Float?    // 31.0 = 31%
+  avgDealSizeDollars  BigInt?
+
+  // Agent-managed (modern AI-augmented selling)
+  agentsManaged       Int?
+  agentPipelineDollars BigInt?
+
+  // notes & verification
+  notes               String?   @db.Text
+  verified            Boolean   @default(false)
+  verifiedByEmail     String?
+  verifiedByName      String?
+  verifiedAt          DateTime?
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  card                Card      @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@unique([cardId, period])
+  @@index([cardId, fiscalYear, fiscalQuarter])
+}
+
+model Employment {
+  id            String    @id @default(cuid())
+  userId        String
+  company       String
+  title         String
+  startDate     DateTime  // first day
+  endDate       DateTime? // null = current
+  isCurrent     Boolean   @default(false)
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+model VerificationRequest {
+  id              String              @id @default(cuid())
+  cardId          String
+  token           String              @unique  @default(cuid())   // used in /verify/[token]
+
+  verifierEmail   String
+  verifierName    String?
+  relationship    String?             // "manager" | "peer" | "ops" — free text for now
+
+  // quarters this request covers (period strings, e.g. ["Q3 24", "Q4 24"])
+  quarterPeriods  String[]
+
+  status          VerificationStatus  @default(PENDING)
+  approvedKpis    String[]            // periods the verifier said "yes" to (subset of quarterPeriods)
+  rejectionReason String?             @db.Text
+
+  sentAt          DateTime            @default(now())
+  respondedAt     DateTime?
+  expiresAt       DateTime            // typically sentAt + 30 days
+
+  card            Card                @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@index([cardId, status])
+  @@index([token])
+}
