@@ -12,8 +12,8 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("POSTGRES_PRISMA_URL") // pooled URL — used at runtime
-  directUrl = env("POSTGRES_URL_NON_POOLING") // direct URL — used for migrations
+ url      = env("salescarddb_POSTGRES_PRISMA_URL") // pooled URL — used at runtime
+  directUrl = env("salescarddb_POSTGRES_URL_NON_POOLING") // direct URL — used for migrations / db push
 }
 
 // =================== NextAuth tables ===================
