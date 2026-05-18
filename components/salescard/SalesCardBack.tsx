@@ -201,7 +201,6 @@ export function SalesCardBack({
           </text>
           <foreignObject x="32" y="512" width="404" height="92">
             <p
-
               style={{
                 margin: 0,
                 padding: 0,
