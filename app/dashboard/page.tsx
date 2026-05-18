@@ -14,7 +14,14 @@ export default async function DashboardPage() {
 
   const user = await db.user.findUnique({
     where: { id: session.user.id },
-    include: { card: { include: { quarters: true } } },
+    include: {
+      card: {
+        include: {
+          quarters: true,
+          verifications: { orderBy: { sentAt: "desc" } },
+        },
+      },
+    },
   });
   if (!user) {
     redirect("/sign-in");

@@ -3,12 +3,16 @@ import { SalesCardBack, type QuarterRow } from "@/components/salescard/SalesCard
 import { calculateScore, type QuarterInput } from "@/lib/score";
 import { fmtMoney, fmtPct, fmtCount } from "@/lib/format";
 import { tierFor } from "@/lib/tier";
-import type { Card, Quarter, User, SalesRole } from "@prisma/client";
+import type { Card, Quarter, User, SalesRole, VerificationRequest } from "@prisma/client";
 import Link from "next/link";
+import { RequestVerificationDialog } from "./RequestVerificationDialog";
 
 interface Props {
   user: User;
-  card: Card & { quarters: Quarter[] };
+  card: Card & {
+    quarters: Quarter[];
+    verifications?: VerificationRequest[];
+  };
 }
 
 export function CardView({ user, card }: Props) {
@@ -87,13 +91,17 @@ export function CardView({ user, card }: Props) {
             <div className="text-xs tracking-widest font-bold text-[#3478C0] uppercase mb-1">Your SalesCard</div>
             <h1 className="text-3xl font-black tracking-tight">Welcome back, {firstName(name)}.</h1>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <Link
               href="/dashboard/edit"
               className="inline-flex items-center gap-2 text-gray-700 hover:bg-gray-100 font-semibold px-5 py-2.5 rounded-full transition"
             >
               Edit my stats
             </Link>
+            <RequestVerificationDialog
+              quarterPeriods={sortedQuarters.map(q => q.period)}
+              alreadyVerified={sortedQuarters.filter(q => q.verified).map(q => q.period)}
+            />
             <Link
               href={`/u/${card.username}`}
               className="inline-flex items-center gap-2 bg-[#3478C0] hover:bg-[#1E5A9C] text-white font-semibold px-5 py-2.5 rounded-full transition"
@@ -102,6 +110,11 @@ export function CardView({ user, card }: Props) {
             </Link>
           </div>
         </div>
+
+        {/* Verification status panel */}
+        {card.verifications && card.verifications.length > 0 && (
+          <VerificationStatusPanel verifications={card.verifications} />
+        )}
 
         {/* Score banner */}
         <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-10 flex items-center gap-6 flex-wrap">
@@ -180,4 +193,56 @@ function roleLabel(role: SalesRole): string {
     case "SDR": return "SDR";
     default:    return "Rep";
   }
+}
+
+// =========================================================================
+// Verification status panel — shows pending / approved / rejected requests
+// =========================================================================
+
+function VerificationStatusPanel({ verifications }: { verifications: VerificationRequest[] }) {
+  // newest first
+  const sorted = [...verifications].sort((a, b) => b.sentAt.getTime() - a.sentAt.getTime());
+  const pending  = sorted.filter(v => v.status === "PENDING");
+  const approved = sorted.filter(v => v.status === "APPROVED");
+  const rejected = sorted.filter(v => v.status === "REJECTED");
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-2xl p-5 mb-8">
+      <div className="text-xs tracking-widest font-bold text-gray-500 uppercase mb-3">
+        Verification activity
+      </div>
+      <div className="space-y-2">
+        {pending.map(v => (
+          <Row key={v.id} v={v} variant="pending" />
+        ))}
+        {approved.map(v => (
+          <Row key={v.id} v={v} variant="approved" />
+        ))}
+        {rejected.map(v => (
+          <Row key={v.id} v={v} variant="rejected" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Row({ v, variant }: { v: VerificationRequest; variant: "pending" | "approved" | "rejected" }) {
+  const label = v.verifierName ? `${v.verifierName} <${v.verifierEmail}>` : v.verifierEmail;
+  const periods = v.quarterPeriods.join(", ");
+  const meta = {
+    pending:  { color: "bg-amber-100 text-amber-700",       text: "Pending"  },
+    approved: { color: "bg-emerald-100 text-emerald-700",   text: "Verified" },
+    rejected: { color: "bg-red-100 text-red-700",           text: "Flagged"  },
+  }[variant];
+  return (
+    <div className="flex items-center justify-between gap-3 py-1.5">
+      <div className="text-sm">
+        <span className="font-semibold text-gray-900">{label}</span>
+        <span className="text-gray-500"> · {periods}</span>
+      </div>
+      <span className={`text-xs font-black tracking-widest uppercase px-2.5 py-0.5 rounded-full ${meta.color}`}>
+        {meta.text}
+      </span>
+    </div>
+  );
 }
