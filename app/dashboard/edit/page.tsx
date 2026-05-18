@@ -54,11 +54,9 @@ export default async function EditPage() {
         <h1 className="text-3xl font-black tracking-tight mt-3 mb-2">Edit your stats</h1>
         <p className="text-gray-600 mb-8">Update any quarter. We&apos;ll recalculate your score on save.</p>
         <KpiForm
-          quarters={quarters}
-          initialRole={(user.role ?? "AE") as SalesRole}
-          defaultRows={rows}
-          initialAgents={initialAgents}
-        />
+  quarters={quarters}
+  initialRole={(user.role ?? "AE") as SalesRole}
+/>
       </div>
     </main>
   );
