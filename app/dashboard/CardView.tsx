@@ -82,7 +82,7 @@ export function CardView({ user, card }: Props) {
   const verifiedCount = sortedQuarters.filter(q => q.verified).length;
   const totalQuarters = sortedQuarters.length;
 
-  const scoutReport = `${firstName(name)}'s ${totalQuarters}-quarter record shows a ${tier.label.toLowerCase()} performance tier with verified track record. ${verifiedCount} of ${totalQuarters} quarters carry full weight.`;
+  const scoutReport = `${firstName(name)}'s ${totalQuarters}-quarter record shows a ${tier.name.toLowerCase()} performance tier with verified track record. ${verifiedCount} of ${totalQuarters} quarters carry full weight.`;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -116,7 +116,8 @@ export function CardView({ user, card }: Props) {
             <ShareDialog
               repName={name}
               score={score}
-              tierLabel={tier.label}
+              tierLabel={tier.name}
+              tierDescription={tier.description}
               username={card.username}
             />
           </div>
@@ -137,14 +138,15 @@ export function CardView({ user, card }: Props) {
           </div>
           <div className="flex-1 min-w-[200px]">
             <div className="text-xs tracking-widest font-bold text-gray-500 uppercase">SalesCard Score</div>
-            <div className="text-2xl font-black tracking-tight">
-              {score} <span className="text-gray-400 font-bold text-base">/ 100</span>
-              <span className="ml-3 px-3 py-1 rounded-full text-xs font-black tracking-widest"
+            <div className="text-2xl font-black tracking-tight flex items-center gap-3 flex-wrap">
+              <span>{score} <span className="text-gray-400 font-bold text-base">/ 100</span></span>
+              <span className="px-3 py-1 rounded-full text-xs font-black tracking-widest"
                     style={{ background: `#${tier.color}20`, color: `#${tier.color}` }}>
-                {tier.label}
+                {tier.name.toUpperCase()}
               </span>
             </div>
-            <div className="text-sm text-gray-500 mt-1">
+            <div className="text-sm text-gray-700 mt-1 italic">{tier.description}</div>
+            <div className="text-sm text-gray-500 mt-0.5">
               {verifiedCount}/{totalQuarters} quarters verified · placeholder peer percentile (live percentile activates once we have enough peers)
             </div>
           </div>

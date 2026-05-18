@@ -1,23 +1,38 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 
 interface Props {
   repName: string;
   score: number;
   tierLabel: string;
+  tierDescription?: string;
   username: string;
   /** Optional override; defaults to https://app.salescard.ai/u/{username} */
   cardUrl?: string;
 }
 
-export function ShareDialog({ repName, score, tierLabel, username, cardUrl }: Props) {
+export function ShareDialog({
+  repName,
+  score,
+  tierLabel,
+  tierDescription,
+  username,
+  cardUrl,
+}: Props) {
   const url = cardUrl || `https://app.salescard.ai/u/${username}`;
-  const defaultCaption = buildDefaultCaption({ repName, score, tierLabel, url });
+  const defaultCaption = buildDefaultCaption({
+    repName,
+    score,
+    tierLabel,
+    tierDescription: tierDescription || "",
+    url,
+  });
 
   const [open, setOpen] = useState(false);
   const [caption, setCaption] = useState(defaultCaption);
   const [copied, setCopied] = useState<"caption" | "url" | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Reset state when reopening
   useEffect(() => {
@@ -44,12 +59,12 @@ export function ShareDialog({ repName, score, tierLabel, username, cardUrl }: Pr
       setCopied(which);
       setTimeout(() => setCopied(null), 1800);
     } catch {
-      // ignore; fallback below
+      // ignore — fallback below
     }
   };
 
   const openLinkedIn = async () => {
-    // LinkedIn auto-unfurls the URL into a rich card using our OG image.
+    // LinkedIn auto-unfurls the URL into a rich card via our OG image.
     // Their share dialog no longer accepts pre-filled text, so we copy the
     // caption first so the user can paste it.
     await copyTo(caption, "caption");
@@ -118,9 +133,10 @@ export function ShareDialog({ repName, score, tierLabel, username, cardUrl }: Pr
                 </button>
               </div>
               <textarea
+                ref={textareaRef}
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
-                rows={6}
+                rows={11}
                 className="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm leading-relaxed focus:outline-none focus:border-[#3478C0] bg-white resize-y"
               />
             </label>
@@ -175,31 +191,32 @@ function buildDefaultCaption({
   repName,
   score,
   tierLabel,
+  tierDescription,
   url,
 }: {
   repName: string;
   score: number;
   tierLabel: string;
+  tierDescription: string;
   url: string;
 }): string {
-  const first = repName.split(/\s+/)[0] || repName;
-  const tierClean = (tierLabel || "").trim();
-  const tierLine = tierClean ? `Tier: ${tierClean}` : "";
-
-  return [
-    `Every sales rep says they're "top 10%."`,
-    `I finally got receipts.`,
+  void repName; // currently unused but kept for future personalization
+  const lines = [
+    `Every sales rep says they're "top 10%." I have the receipts.`,
     ``,
     `My SalesCard Score: ${score} / 100`,
-    tierLine,
-    `Eight quarters. Verified by my managers and peers.`,
     ``,
-    `Numbers don't lie. Reps shouldn't have to either.`,
-    ``,
-    `${url}`,
-    ``,
-    `#sales #salescareer`,
-  ]
-    .filter((line) => line !== null)
-    .join("\n");
+    `Tier: ${tierLabel}`,
+  ];
+  if (tierDescription) {
+    lines.push(tierDescription);
+  }
+  lines.push(``);
+  lines.push(`Eight quarters. Verified by my managers and peers.`);
+  lines.push(`Numbers don't lie. Reps shouldn't have to either.`);
+  lines.push(``);
+  lines.push(url);
+  lines.push(``);
+  lines.push(`#sales #salescareer #saleslife #AIforSales`);
+  return lines.join("\n");
 }
