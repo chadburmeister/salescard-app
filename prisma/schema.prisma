@@ -120,6 +120,11 @@ model Quarter {
   fiscalYear          Int       // 2024
   fiscalQuarter       Int       // 3
 
+targetSegment       String?
+conversationsRange  String?
+meetingsRange       String?
+pipeOpps            Int?
+
   // BDR/SDR fields (nullable for AEs)
   dials               Int?
   connects            Int?
