@@ -91,6 +91,7 @@ model Card {
   userId          String          @unique
   username        String          @unique  // slug for public URL: salescard.ai/u/<username>
   visibility      CardVisibility  @default(UNLISTED)
+cardBackground  String?
 
   // computed score + tier (updated when KPIs change)
   score           Int?            // 0-100
