@@ -7,9 +7,11 @@ import { useRouter } from "next/navigation";
 interface Props {
   currentImage: string | null;
   userName: string;
+  /** Optional custom trigger. If omitted, renders the default avatar button. */
+  children?: (open: () => void) => React.ReactNode;
 }
 
-export function PhotoUploadDialog({ currentImage, userName }: Props) {
+export function PhotoUploadDialog({ currentImage, userName, children }: Props) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -19,7 +21,6 @@ export function PhotoUploadDialog({ currentImage, userName }: Props) {
   const [state, setState] = useState<"idle" | "uploading" | "redirecting" | "error" | "success">("idle");
   const [error, setError] = useState<string | null>(null);
 
-  // Cleanup object URLs on unmount or when preview changes
   useEffect(() => {
     return () => {
       if (previewUrl && previewUrl.startsWith("blob:")) {
@@ -28,7 +29,6 @@ export function PhotoUploadDialog({ currentImage, userName }: Props) {
     };
   }, [previewUrl]);
 
-  // ESC to close
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -77,12 +77,8 @@ export function PhotoUploadDialog({ currentImage, userName }: Props) {
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body.error || "Upload failed.");
       setState("success");
-      // Refresh server components so the new image renders
       router.refresh();
-      setTimeout(() => {
-        setOpen(false);
-        reset();
-      }, 900);
+      setTimeout(() => { setOpen(false); reset(); }, 900);
     } catch (err) {
       setError((err as Error).message || "Upload failed. Try again.");
       setState("error");
@@ -91,35 +87,38 @@ export function PhotoUploadDialog({ currentImage, userName }: Props) {
 
   const onReimportLinkedIn = async () => {
     setState("redirecting");
-    // Re-runs OAuth. NextAuth's adapter updates User.image on each successful sign-in,
-    // so the LinkedIn profile photo is refreshed.
     await signIn("linkedin", { callbackUrl: "/dashboard" });
   };
 
+  const openDialog = () => setOpen(true);
+
   return (
     <>
-      {/* Avatar trigger */}
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="group relative w-12 h-12 rounded-full overflow-hidden ring-2 ring-white shadow-sm hover:ring-[#3478C0] transition"
-        aria-label="Update profile photo"
-      >
-        {currentImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={currentImage} alt={userName} className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-[#3478C0] to-[#10B981] text-white font-black flex items-center justify-center text-sm">
-            {initials}
+      {children ? (
+        children(openDialog)
+      ) : (
+        <button
+          type="button"
+          onClick={openDialog}
+          className="group relative w-12 h-12 rounded-full overflow-hidden ring-2 ring-white shadow-sm hover:ring-[#3478C0] transition"
+          aria-label="Update profile photo"
+        >
+          {currentImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={currentImage} alt={userName} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-[#3478C0] to-[#10B981] text-white font-black flex items-center justify-center text-sm">
+              {initials}
+            </div>
+          )}
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/45 transition flex items-center justify-center opacity-0 group-hover:opacity-100">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4Z" />
+            </svg>
           </div>
-        )}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/45 transition flex items-center justify-center opacity-0 group-hover:opacity-100">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 20h9" />
-            <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4Z" />
-          </svg>
-        </div>
-      </button>
+        </button>
+      )}
 
       {open && (
         <div
@@ -153,7 +152,6 @@ export function PhotoUploadDialog({ currentImage, userName }: Props) {
               Used on your dashboard and your public SalesCard. JPEG, PNG, or WebP up to 5 MB.
             </p>
 
-            {/* Preview */}
             <div className="flex items-center justify-center mb-6">
               <div className="w-32 h-32 rounded-full overflow-hidden ring-4 ring-gray-100 shadow-sm bg-gray-50">
                 {previewUrl ? (
@@ -185,7 +183,6 @@ export function PhotoUploadDialog({ currentImage, userName }: Props) {
               </div>
             )}
 
-            {/* Hidden file input */}
             <input
               ref={fileRef}
               type="file"
@@ -194,7 +191,6 @@ export function PhotoUploadDialog({ currentImage, userName }: Props) {
               onChange={onFilePick}
             />
 
-            {/* Action buttons */}
             <div className="space-y-2.5">
               {!selectedFile ? (
                 <>
