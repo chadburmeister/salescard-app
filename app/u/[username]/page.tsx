@@ -9,47 +9,24 @@ import type { SalesRole, VerificationRequest } from "@prisma/client";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-interface PageProps {
-  params: Promise<{ username: string }>;
-}
+interface PageProps { params: Promise<{ username: string }>; }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { username } = await params;
-  const card = await db.card.findUnique({
-    where: { username },
-    include: { user: true },
-  });
-
+  const card = await db.card.findUnique({ where: { username }, include: { user: true } });
   if (!card || card.visibility === "PRIVATE") {
-    return {
-      title: "SalesCard",
-      description: "The verified sales record that follows every SDR, BDR, and AE between jobs.",
-    };
+    return { title: "SalesCard", description: "The verified sales record that follows every SDR, BDR, and AE between jobs." };
   }
-
   const name = card.user.name || card.user.email.split("@")[0];
   const role = roleLabel((card.user.role ?? "AE") as SalesRole);
   const score = card.score ?? 0;
   const tier = tierFor(score);
-
   const title = `${name} — SalesCard Score ${score} (${tier.name})`;
   const description = `${name} is a verified ${role} with a SalesCard Score of ${score}. See the full eight-quarter record.`;
-
   return {
-    title,
-    description,
-    openGraph: {
-      title,
-      description,
-      type: "profile",
-      url: `https://app.salescard.ai/u/${username}`,
-      siteName: "SalesCard",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-    },
+    title, description,
+    openGraph: { title, description, type: "profile", url: `https://app.salescard.ai/u/${username}`, siteName: "SalesCard" },
+    twitter: { card: "summary_large_image", title, description },
   };
 }
 
@@ -60,23 +37,16 @@ export default async function PublicProfilePage({ params }: PageProps) {
     include: {
       user: true,
       quarters: { orderBy: [{ fiscalYear: "asc" }, { fiscalQuarter: "asc" }] },
-      verifications: {
-        where: { status: "APPROVED" },
-        orderBy: { respondedAt: "desc" },
-      },
+      verifications: { where: { status: "APPROVED" }, orderBy: { respondedAt: "desc" } },
     },
   });
-
-  if (!card || card.visibility === "PRIVATE") {
-    notFound();
-  }
+  if (!card || card.visibility === "PRIVATE") notFound();
 
   const user = card.user;
   const role = (user.role ?? "AE") as SalesRole;
   const name = user.name ?? user.email.split("@")[0];
   const score = card.score ?? 0;
 
-  // Sub-grades
   const scoreInputs: QuarterInput[] = card.quarters.map(q => ({
     period:               q.period,
     closedWonDollars:     q.closedWonDollars     ? Number(q.closedWonDollars)     : null,
@@ -94,7 +64,6 @@ export default async function PublicProfilePage({ params }: PageProps) {
   }));
   const computed = calculateScore(role, scoreInputs, card.percentile ?? 50);
 
-  // New column set
   const quarterRows: QuarterRow[] = card.quarters.map(q => ({
     period:        q.period,
     target:        q.targetSegment      ?? "—",
@@ -114,14 +83,11 @@ export default async function PublicProfilePage({ params }: PageProps) {
     const quotaVals = card.quarters.map(q => q.quotaAttainmentPct).filter((x): x is number => x != null);
     const avgQuota = quotaVals.length ? quotaVals.reduce((a, b) => a + b, 0) / quotaVals.length : null;
     return {
-      period:        "TOTAL",
-      target:        "—",
-      conversations: "—",
-      meetings:      "—",
-      pipeOpps:      sumOpps > 0 ? String(sumOpps) : "—",
-      pipeline:      card.showRawKpis ? fmtMoney(sumPipe) : "—",
-      closedWon:     card.showRawKpis ? fmtMoney(sumWon)  : "—",
-      quota:         fmtPct(avgQuota),
+      period: "TOTAL", target: "—", conversations: "—", meetings: "—",
+      pipeOpps: sumOpps > 0 ? String(sumOpps) : "—",
+      pipeline: card.showRawKpis ? fmtMoney(sumPipe) : "—",
+      closedWon: card.showRawKpis ? fmtMoney(sumWon)  : "—",
+      quota: fmtPct(avgQuota),
     };
   })();
 
@@ -138,7 +104,6 @@ export default async function PublicProfilePage({ params }: PageProps) {
           </Link>
         </div>
 
-        {/* Profile photo + identity header */}
         <div className="flex flex-col items-center text-center mb-10">
           <div className="w-28 h-28 rounded-full overflow-hidden ring-4 ring-white shadow-lg bg-gray-50 mb-4">
             {user.image ? (
@@ -161,7 +126,8 @@ export default async function PublicProfilePage({ params }: PageProps) {
               name={name}
               role={roleLabel(role)}
               score={score}
-              linkedinHandle={card.username}
+              photoUrl={user.image ?? undefined}
+              linkedinHandle={linkedinHandleFor(user)}
               subGrades={computed.subGradesTenScale}
             />
           </div>
@@ -189,8 +155,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
         )}
 
         <div className="text-center text-sm text-gray-500 mt-12">
-          This is <strong>{name}</strong>&apos;s public SalesCard.
-          {" "}
+          This is <strong>{name}</strong>&apos;s public SalesCard.{" "}
           <Link href="/sign-in" className="text-[#3478C0] hover:underline">Claim your own →</Link>
         </div>
       </div>
@@ -207,21 +172,19 @@ function roleLabel(role: SalesRole): string {
   }
 }
 
-// =========================================================================
-// VerificationRecord — list of approved verifiers shown on the public page
-// =========================================================================
+function linkedinHandleFor(u: { email: string; linkedinUrl: string | null }): string {
+  if (u.linkedinUrl) {
+    const m = u.linkedinUrl.match(/linkedin\.com\/in\/([^/?#]+)/i);
+    if (m) return m[1];
+    if (!/[\/.]/.test(u.linkedinUrl)) return u.linkedinUrl;
+  }
+  return u.email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+}
 
-function VerificationRecord({
-  verifications,
-  repName,
-}: {
-  verifications: VerificationRequest[];
-  repName: string;
-}) {
+function VerificationRecord({ verifications, repName }: { verifications: VerificationRequest[]; repName: string; }) {
   const verifierCount = new Set(verifications.map(v => v.verifierEmail.toLowerCase())).size;
   const allPeriods = new Set<string>();
   for (const v of verifications) for (const p of v.quarterPeriods) allPeriods.add(p);
-
   return (
     <section className="mt-16 max-w-3xl mx-auto">
       <div className="flex items-center justify-center gap-2 mb-2">
@@ -229,9 +192,7 @@ function VerificationRecord({
           <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
           <polyline points="22 4 12 14.01 9 11.01" />
         </svg>
-        <span className="text-xs tracking-widest font-bold text-emerald-600 uppercase">
-          Verified record
-        </span>
+        <span className="text-xs tracking-widest font-bold text-emerald-600 uppercase">Verified record</span>
       </div>
       <h2 className="text-2xl md:text-3xl font-black tracking-tight text-center mb-2">
         Verified by {verifierCount} {verifierCount === 1 ? "person" : "people"}
@@ -239,13 +200,9 @@ function VerificationRecord({
       <p className="text-center text-gray-600 text-sm mb-8">
         {allPeriods.size} of {repName}&apos;s quarters carry full-weight verification from independent contacts.
       </p>
-
       <div className="space-y-3">
-        {verifications.map(v => (
-          <VerifierRow key={v.id} v={v} />
-        ))}
+        {verifications.map(v => (<VerifierRow key={v.id} v={v} />))}
       </div>
-
       <p className="text-center text-xs text-gray-500 mt-6">
         Verifiers attest these numbers are accurate to their knowledge. Verified quarters carry full weight in the SalesCard Score; unverified quarters carry half.
       </p>
@@ -259,12 +216,9 @@ function VerifierRow({ v }: { v: VerificationRequest }) {
   const rel = v.relationship ? capitalize(v.relationship) : "Contact";
   const date = v.respondedAt ? new Date(v.respondedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "";
   const periods = v.quarterPeriods.join(" · ");
-
   return (
     <div className="flex items-center gap-4 bg-white border border-gray-200 rounded-xl p-4">
-      <div className="w-11 h-11 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-black text-sm flex-shrink-0">
-        {initials}
-      </div>
+      <div className="w-11 h-11 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-black text-sm flex-shrink-0">{initials}</div>
       <div className="flex-1 min-w-0">
         <div className="font-bold text-gray-900 truncate">{displayName}</div>
         <div className="text-xs text-gray-500">{rel} · verified {periods}</div>
@@ -290,10 +244,10 @@ function getInitials(s: string): string {
 }
 
 function maskEmail(email: string): string {
-  const [user, domain] = email.split("@");
-  if (!domain) return "Anonymous verifier";
-  const shown = user.slice(0, Math.min(2, user.length));
-  return `${shown}${user.length > 2 ? "•••" : ""}@${domain}`;
+  const [u, d] = email.split("@");
+  if (!d) return "Anonymous verifier";
+  const shown = u.slice(0, Math.min(2, u.length));
+  return `${shown}${u.length > 2 ? "•••" : ""}@${d}`;
 }
 
 function capitalize(s: string): string {
