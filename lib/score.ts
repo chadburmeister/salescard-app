@@ -33,10 +33,10 @@ export interface QuarterInput {
 }
 
 export interface SubGradesTen {
-  quota: number;
-  pipeline: number;
-  winRate: number;   // kept under this key for compatibility with SalesCardFront
-  tenure: number;
+  QUOTA: number;
+  PIPELINE: number;
+  WIN_RATE: number;
+  TENURE: number;
 }
 
 export interface ScoreResult {
