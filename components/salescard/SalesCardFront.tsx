@@ -6,7 +6,6 @@ export interface SalesCardFrontProps {
   name: string;
   role: string;
   score: number;
-  /** LinkedIn handle WITHOUT the leading slash (e.g. "chadburmeister"). */
   linkedinHandle?: string;
   photoUrl?: string;
   subGrades?: { PIPELINE: number; WIN_RATE: number; QUOTA: number; TENURE: number };
@@ -42,7 +41,7 @@ export function SalesCardFront({
     >
       <defs>
         <clipPath id={clipId}>
-          <rect x="30" y="220" width="400" height="290" />
+          <circle cx="230" cy="365" r="104" />
         </clipPath>
       </defs>
 
@@ -107,26 +106,37 @@ export function SalesCardFront({
         {score}
       </text>
 
-      {/* photo */}
+      {/* ====== Photo zone — circular avatar with tier ring ====== */}
       <rect x="30" y="220" width="400" height="290" fill="#F5F7FB" />
+      {/* Decorative faint stripes */}
+      <rect x="30" y="220" width="400" height="3" fill={tierColor} opacity="0.35" />
+      <rect x="30" y="507" width="400" height="3" fill={tierColor} opacity="0.35" />
+
+      {/* Tier-colored outer ring */}
+      <circle cx="230" cy="365" r="112" fill={tierColor} />
+      {/* White gap */}
+      <circle cx="230" cy="365" r="106" fill="#FFFFFF" />
+
       {photoUrl ? (
         <image
           href={photoUrl}
-          x="30"
-          y="220"
-          width="400"
-          height="290"
+          x="125"
+          y="260"
+          width="210"
+          height="210"
           preserveAspectRatio="xMidYMid slice"
           clipPath={`url(#${clipId})`}
         />
       ) : (
         <>
-          <circle cx="230" cy="320" r="52" fill="#2A3B4F" />
-          <path d="M 130 510 C 130 430, 180 400, 230 400 C 280 400, 330 430, 330 510 Z" fill="#2A3B4F" />
+          {/* Fallback silhouette inside the circle */}
+          <circle cx="230" cy="365" r="104" fill="#E5E7EB" />
+          <circle cx="230" cy="338" r="32" fill="#9CA3AF" />
+          <path d="M 162 460 C 162 412, 196 388, 230 388 C 264 388, 298 412, 298 460 Z" fill="#9CA3AF" />
         </>
       )}
 
-      {/* LinkedIn — now a real clickable link */}
+      {/* LinkedIn — clickable */}
       <a href={linkedinUrl} target="_blank" rel="noopener noreferrer">
         <g transform="translate(30, 522)">
           <rect width="20" height="20" rx="3" fill="#0A66C2" />
