@@ -192,11 +192,11 @@ export function calculateScore(
   const tenure = Math.min(10, quarters.length * 1.25); // 8 verifiable quarters → 10
   return {
     scoreOutOf100,
-    subGradesTenScale: {
-      quota:    Math.round(quotaScore    / 10),
-      pipeline: Math.round(pipeScore     / 10),
-      winRate:  Math.round(activityScore / 10),
-      tenure:   Math.round(tenure),
+   subGradesTenScale: {
+      QUOTA:    Math.round(quotaScore    / 10),
+      PIPELINE: Math.round(pipeScore     / 10),
+      WIN_RATE: Math.round(activityScore / 10),
+      TENURE:   Math.round(tenure),
     },
   };
 }
