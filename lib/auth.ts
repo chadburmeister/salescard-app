@@ -11,6 +11,10 @@ import { db } from "./db";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(db),
+  // Required for custom production domains (app.salescard.ai) so NextAuth
+  // accepts the incoming host header instead of refusing to start.
+  trustHost: true,
+  secret: process.env.AUTH_SECRET,
   providers: [
     LinkedIn({
       clientId: process.env.AUTH_LINKEDIN_ID,

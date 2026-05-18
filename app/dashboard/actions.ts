@@ -2,7 +2,6 @@
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-
 import { calculateScore, type QuarterInput } from "@/lib/score";
 import { tierFor } from "@/lib/tier";
 import { uniqueUsername } from "@/lib/slug";
@@ -128,5 +127,3 @@ export async function saveKpis(submission: KpiSubmission) {
   revalidatePath("/dashboard");
   redirect("/dashboard");
 }
-
-
