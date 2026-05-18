@@ -156,22 +156,13 @@ export function CardView({ user, card }: Props) {
               linkedinHandle={linkedinHandleFor(user)}
               subGrades={computed.subGradesTenScale}
             />
-            <div className="mt-4 flex justify-center">
-              <PhotoUploadDialog currentImage={user.image ?? null} userName={name}>
-                {(open) => (
-                  <button
-                    type="button"
-                    onClick={open}
-                    className="inline-flex items-center gap-2 text-[#3478C0] hover:text-[#1E5A9C] hover:bg-blue-50 font-semibold text-sm px-4 py-2 rounded-full transition"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                      <circle cx="12" cy="13" r="4"/>
-                    </svg>
-                    Change my card photo
-                  </button>
-                )}
-              </PhotoUploadDialog>
+          <div className="mt-4 flex justify-center">
+              <PhotoUploadDialog
+                currentImage={user.image ?? null}
+                userName={name}
+                variant="button"
+                buttonLabel="Change my card photo"
+              />
             </div>
           </div>
           <div>
