@@ -5,7 +5,7 @@ import { SalesCardBack, type QuarterRow } from "@/components/salescard/SalesCard
 import { calculateScore, type QuarterInput } from "@/lib/score";
 import { fmtMoney, fmtPct, fmtCount } from "@/lib/format";
 import { tierFor } from "@/lib/tier";
-import type { SalesRole } from "@prisma/client";
+import type { SalesRole, VerificationRequest } from "@prisma/client";
 import Link from "next/link";
 
 interface PageProps {
@@ -19,6 +19,10 @@ export default async function PublicProfilePage({ params }: PageProps) {
     include: {
       user: true,
       quarters: { orderBy: [{ fiscalYear: "asc" }, { fiscalQuarter: "asc" }] },
+      verifications: {
+        where: { status: "APPROVED" },
+        orderBy: { respondedAt: "desc" },
+      },
     },
   });
 
@@ -31,7 +35,6 @@ export default async function PublicProfilePage({ params }: PageProps) {
   const name = user.name ?? user.email.split("@")[0];
   const score = card.score ?? 0;
 
-  // Sub-grades
   const scoreInputs: QuarterInput[] = card.quarters.map(q => ({
     period: q.period,
     closedWonDollars:     q.closedWonDollars     ? Number(q.closedWonDollars)     : null,
@@ -82,7 +85,6 @@ export default async function PublicProfilePage({ params }: PageProps) {
 
   const verifiedCount = card.quarters.filter(q => q.verified).length;
   const totalQuarters = card.quarters.length;
-
   const tier = tierFor(score);
 
   return (
@@ -125,6 +127,10 @@ export default async function PublicProfilePage({ params }: PageProps) {
           </div>
         </div>
 
+        {card.verifications.length > 0 && (
+          <VerificationRecord verifications={card.verifications} repName={name} />
+        )}
+
         <div className="text-center text-sm text-gray-500 mt-12">
           This is <strong>{name}</strong>&apos;s public SalesCard.
           {" "}
@@ -142,4 +148,98 @@ function roleLabel(role: SalesRole): string {
     case "SDR": return "SDR";
     default:    return "Rep";
   }
+}
+
+function VerificationRecord({
+  verifications,
+  repName,
+}: {
+  verifications: VerificationRequest[];
+  repName: string;
+}) {
+  const verifierCount = new Set(verifications.map(v => v.verifierEmail.toLowerCase())).size;
+  const allPeriods = new Set<string>();
+  for (const v of verifications) for (const p of v.quarterPeriods) allPeriods.add(p);
+
+  return (
+    <section className="mt-16 max-w-3xl mx-auto">
+      <div className="flex items-center justify-center gap-2 mb-2">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+          <polyline points="22 4 12 14.01 9 11.01" />
+        </svg>
+        <span className="text-xs tracking-widest font-bold text-emerald-600 uppercase">
+          Verified record
+        </span>
+      </div>
+      <h2 className="text-2xl md:text-3xl font-black tracking-tight text-center mb-2">
+        Verified by {verifierCount} {verifierCount === 1 ? "person" : "people"}
+      </h2>
+      <p className="text-center text-gray-600 text-sm mb-8">
+        {allPeriods.size} of {repName}&apos;s quarters carry full-weight verification from independent contacts.
+      </p>
+
+      <div className="space-y-3">
+        {verifications.map(v => (
+          <VerifierRow key={v.id} v={v} />
+        ))}
+      </div>
+
+      <p className="text-center text-xs text-gray-500 mt-6">
+        Verifiers attest these numbers are accurate to their knowledge. Verified quarters carry full weight in the SalesCard Score; unverified quarters carry half.
+      </p>
+    </section>
+  );
+}
+
+function VerifierRow({ v }: { v: VerificationRequest }) {
+  const displayName = v.verifierName?.trim() || maskEmail(v.verifierEmail);
+  const initials = getInitials(v.verifierName || v.verifierEmail);
+  const rel = v.relationship ? capitalize(v.relationship) : "Contact";
+  const date = v.respondedAt ? new Date(v.respondedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "";
+  const periods = v.quarterPeriods.join(" · ");
+
+  return (
+    <div className="flex items-center gap-4 bg-white border border-gray-200 rounded-xl p-4">
+      <div className="w-11 h-11 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-black text-sm flex-shrink-0">
+        {initials}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="font-bold text-gray-900 truncate">{displayName}</div>
+        <div className="text-xs text-gray-500">{rel} · verified {periods}</div>
+      </div>
+      <div className="hidden sm:block text-right text-xs text-gray-500 whitespace-nowrap">
+        <div className="flex items-center gap-1 text-emerald-600 font-bold justify-end mb-0.5">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Verified
+        </div>
+        <div>{date}</div>
+      </div>
+    </div>
+  );
+}
+
+function getInitials(s: string): string {
+  const cleaned = (s || "").trim();
+  if (!cleaned) return "?";
+  const parts = cleaned.split(/[\s@.]+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
+function maskEmail(email: string): string {
+  const [user, domain] = email.split("@");
+  if (!domain) return "Anonymous verifier";
+  const shown = user.slice(0, Math.min(2, user.length));
+  return `${shown}${user.length > 2 ? "•••" : ""}@${domain}`;
+}
+
+function capitalize(s: string): string {
+  if (!s) return s;
+  const lower = s.toLowerCase();
+  if (lower.includes("manager")) return "Manager";
+  if (lower.includes("peer"))    return "Peer rep";
+  if (lower.includes("ops") || lower.includes("rev")) return "RevOps partner";
+  return s[0].toUpperCase() + s.slice(1).toLowerCase();
 }
