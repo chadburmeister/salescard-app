@@ -299,7 +299,7 @@ function CurrencyInput({
 }) {
   return (
     <div className="relative">
-      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
+      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm pointer-events-none">$</span>
       <input
         type="number"
         min={0}
@@ -308,7 +308,8 @@ function CurrencyInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="0"
-        className="form-input pl-7"
+        className="form-input"
+        style={{ paddingLeft: "28px" }}
       />
     </div>
   );
