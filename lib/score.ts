@@ -1,200 +1,207 @@
-/**
- * SalesCard Score (1-100) calculation.
- *
- *   Score = 0.70 × Outcomes Index  +  0.30 × Peer Percentile
- *
- * For now, peer percentile defaults to 50 (median) if we don't have enough peers
- * in the same role+segment. As the database grows, this becomes more meaningful.
- *
- * Sub-grade weights (separate, used to display 4 categories on the card front):
- *
- * For AE:
- *   PIPELINE — Closed-won $ + Pipeline $    (40% of outcomes index)
- *   WIN RATE — Win rate + Meetings → Opps   (15%)
- *   QUOTA    — Quota attainment %            (35%)
- *   TENURE   — Quarter-over-quarter consistency (10%)
- *
- * For BDR/SDR:
- *   PIPELINE — Pipeline $ + Opps created    (45%)
- *   WIN RATE — Meetings → Opps + Activity   (25%)
- *   QUOTA    — Pipeline $ / pipeline goal   (20%)
- *   TENURE   — QoQ consistency               (10%)
- *
- * Verified KPIs weighted 1.0×.  Unverified weighted 0.5× (until verified).
- */
+// SalesCard Score
+//
+// Inputs: 8 quarters of self-reported KPIs (some verified, some not).
+// Output: a 0-100 score, plus four sub-grades on a 0-10 scale for the card front.
+//
+// Weights (sum = 100). Quota attainment is the dominant signal.
+//   Quota %          50
+//   Closed-won $     20
+//   Pipeline $       10
+//   Pipe Opps         5
+//   Activity ratio    5   (meetings → pipe opps conversion as a proxy for hustle)
+//   Peer percentile  10
+//
+// Verified quarters carry full weight. Unverified quarters carry half weight.
 
 import type { SalesRole } from "@prisma/client";
 
 export interface QuarterInput {
   period: string;
-  // BDR/SDR
-  dials?: number | null;
-  connects?: number | null;
-  conversations?: number | null;
-  // shared
-  meetingsBooked?: number | null;
-  opportunitiesCreated?: number | null;
-  pipelineDollars?: number | null;     // $
-  // AE
-  closedWonDollars?: number | null;
-  quotaAttainmentPct?: number | null;  // 100 = met quota
-  winRatePct?: number | null;          // 31 = 31%
-  avgDealSizeDollars?: number | null;
-  // agent-managed
+  closedWonDollars: number | null;
+  quotaAttainmentPct: number | null;
+  winRatePct: number | null;        // kept optional; not used in the new score
+  pipelineDollars: number | null;
+  avgDealSizeDollars: number | null; // kept optional; not used in the new score
+  pipeOpps?: number | null;
+  conversationsRange?: string | null;
+  meetingsRange?: string | null;
+  targetSegment?: string | null;
+  // Deprecated (still on the type so saveKpis can pass them through cleanly)
   agentsManaged?: number | null;
   agentPipelineDollars?: number | null;
-  // verification
   verified: boolean;
 }
 
-export interface SubGrades {
-  PIPELINE: number;
-  WIN_RATE: number;
-  QUOTA: number;
-  TENURE: number;
+export interface SubGradesTen {
+  quota: number;
+  pipeline: number;
+  winRate: number;   // kept under this key for compatibility with SalesCardFront
+  tenure: number;
 }
 
 export interface ScoreResult {
-  score: number;        // 0-100 rounded
-  outcomesIndex: number; // 0-100
-  peerPercentile: number;// 0-100
-  subGrades: SubGrades;
-  // sub-grade values rounded to 1 decimal, like Beckett (1-10 scale)
-  subGradesTenScale: SubGrades;
+  scoreOutOf100: number;
+  subGradesTenScale: SubGradesTen;
 }
 
-// === Reference benchmarks (placeholder — replace with seed data later) ===
-//   These are the "100" point for each KPI: hit it = full marks.
-//   We'll calibrate from real data once we have it.
-const AE_BENCHMARKS = {
-  closedWonPerQuarter: 1_000_000,   // $1M
-  pipelinePerQuarter: 2_500_000,     // $2.5M
-  quotaAttainmentPct: 150,           // 150% = full marks
-  winRatePct: 30,                    // 30% = full marks
-  agentPipelinePerQuarter: 500_000,  // $500K
-} as const;
+// ───────────────────────────────────────────────────────────────────────────
+// Weights
+// ───────────────────────────────────────────────────────────────────────────
+const W_QUOTA      = 50;
+const W_CLOSED_WON = 20;
+const W_PIPELINE   = 10;
+const W_PIPE_OPPS  = 5;
+const W_ACTIVITY   = 5;
+const W_PERCENTILE = 10;
 
-const BDR_BENCHMARKS = {
-  pipelinePerQuarter: 2_000_000,      // $2M
-  meetingsBooked: 40,                 // 40 meetings / Q
-  opportunitiesCreated: 25,           // 25 opps / Q
-  dialsToConvoRatio: 0.10,            // 10% connect rate
-  agentPipelinePerQuarter: 500_000,
-} as const;
-
-// pull a kpi value × verification weight (verified=1.0×, unverified=0.5×)
-function w(value: number | null | undefined, verified: boolean): number {
-  if (value == null) return 0;
-  return value * (verified ? 1.0 : 0.5);
-}
-
-// score 0-100 against a benchmark, capped
-function pct(value: number, benchmark: number): number {
-  if (benchmark <= 0) return 0;
-  return Math.max(0, Math.min(100, (value / benchmark) * 100));
-}
-
-export function calculateScore(
-  role: SalesRole,
-  quarters: QuarterInput[],
-  peerPercentile: number = 50,
-): ScoreResult {
-  // average per-quarter values, weighted by verification
-  const n = quarters.length || 1;
-  const avg = <K extends keyof QuarterInput>(key: K): number => {
-    let sum = 0;
-    let weightSum = 0;
-    for (const q of quarters) {
-      const v = q[key] as number | null | undefined;
-      if (v == null) continue;
-      const weight = q.verified ? 1.0 : 0.5;
-      sum += v * weight;
-      weightSum += weight;
-    }
-    return weightSum > 0 ? sum / weightSum : 0;
-  };
-
-  let sub: SubGrades;
-  if (role === "AE") {
-    const closedWon = avg("closedWonDollars");
-    const pipeline = avg("pipelineDollars");
-    const quotaPct = avg("quotaAttainmentPct");
-    const winRate = avg("winRatePct");
-    const agentPipe = avg("agentPipelineDollars");
-
-    sub = {
-      PIPELINE: Math.round(
-        (pct(closedWon, AE_BENCHMARKS.closedWonPerQuarter) * 0.6 +
-         pct(pipeline,  AE_BENCHMARKS.pipelinePerQuarter)  * 0.4)
-      ),
-      WIN_RATE: Math.round(pct(winRate, AE_BENCHMARKS.winRatePct)),
-      QUOTA:    Math.round(pct(quotaPct, AE_BENCHMARKS.quotaAttainmentPct)),
-      TENURE:   Math.round(consistencyScore(quarters, "closedWonDollars")),
-    };
-  } else {
-    // BDR / SDR
-    const pipeline = avg("pipelineDollars");
-    const meetings = avg("meetingsBooked");
-    const opps = avg("opportunitiesCreated");
-    const agentPipe = avg("agentPipelineDollars");
-
-    sub = {
-      PIPELINE: Math.round(
-        (pct(pipeline, BDR_BENCHMARKS.pipelinePerQuarter) * 0.65 +
-         pct(opps,     BDR_BENCHMARKS.opportunitiesCreated) * 0.35)
-      ),
-      WIN_RATE: Math.round(pct(meetings, BDR_BENCHMARKS.meetingsBooked)),
-      QUOTA:    Math.round(pct(pipeline, BDR_BENCHMARKS.pipelinePerQuarter)),
-      TENURE:   Math.round(consistencyScore(quarters, "pipelineDollars")),
+// ───────────────────────────────────────────────────────────────────────────
+// Anchors (role-adjusted) — value at which the metric maps to 100 points.
+// ───────────────────────────────────────────────────────────────────────────
+function anchors(role: SalesRole | null | undefined) {
+  if (role === "SDR" || role === "BDR") {
+    return {
+      closedWon: 200_000,
+      pipeline:  500_000,
+      pipeOpps:  60,
     };
   }
-
-  // outcomes index = weighted avg of 4 sub-grades
-  const outcomesIndex =
-    sub.PIPELINE * 0.40 +
-    sub.WIN_RATE * 0.20 +
-    sub.QUOTA    * 0.30 +
-    sub.TENURE   * 0.10;
-
-  // final score blends outcomes (70%) and peer percentile (30%)
-  const score = Math.round(outcomesIndex * 0.7 + peerPercentile * 0.3);
-
-  // sub-grades on Beckett-style 1-10 scale (for the card front)
-  const toTen = (n: number) => Math.round(n / 10 * 10) / 10;
-  const subGradesTenScale: SubGrades = {
-    PIPELINE: toTen(sub.PIPELINE),
-    WIN_RATE: toTen(sub.WIN_RATE),
-    QUOTA:    toTen(sub.QUOTA),
-    TENURE:   toTen(sub.TENURE),
-  };
-
+  // AE / default
   return {
-    score,
-    outcomesIndex: Math.round(outcomesIndex),
-    peerPercentile,
-    subGrades: sub,
-    subGradesTenScale,
+    closedWon: 1_000_000,
+    pipeline:  3_000_000,
+    pipeOpps:  30,
   };
 }
 
-// QoQ consistency: how steady is the rep's output across the 8 quarters?
-//   100 = all quarters within ±10% of mean
-//   0   = wild variance
-function consistencyScore<K extends keyof QuarterInput>(
+// Bucket midpoints for range-based dropdowns (e.g. "100-250" → 175).
+function rangeMidpoint(range: string | null | undefined): number | null {
+  if (!range) return null;
+  const r = range.trim();
+  if (r === "<50") return 25;
+  if (r === "50-100") return 75;
+  if (r === "100-250") return 175;
+  if (r === "250+") return 350;
+  // Fall back: try to parse a number directly
+  const n = parseFloat(r);
+  return Number.isFinite(n) ? n : null;
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Weighted average across quarters (verified=1, unverified=0.5).
+// ───────────────────────────────────────────────────────────────────────────
+function wAvg(
   quarters: QuarterInput[],
-  key: K,
+  pick: (q: QuarterInput) => number | null
 ): number {
-  const vals: number[] = [];
+  let sum = 0;
+  let w = 0;
   for (const q of quarters) {
-    const v = q[key] as number | null | undefined;
-    if (v != null && Number.isFinite(v)) vals.push(v);
+    const v = pick(q);
+    if (v == null || !Number.isFinite(v)) continue;
+    const weight = q.verified ? 1 : 0.5;
+    sum += v * weight;
+    w += weight;
   }
-  if (vals.length < 2) return 50; // not enough data, give them middle
-  const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
-  if (mean === 0) return 50;
-  const variance = vals.reduce((a, b) => a + (b - mean) ** 2, 0) / vals.length;
-  const stddev = Math.sqrt(variance);
-  const cv = stddev / Math.abs(mean); // coefficient of variation
-  // cv of 0 → 100, cv of 0.5+ → 0
-  return Math.max(0, Math.min(100, 100 - cv * 200));
+  return w > 0 ? sum / w : 0;
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+export function calculateScore(
+  role: SalesRole | string | null | undefined,
+  quarters: QuarterInput[],
+  percentile: number
+): ScoreResult {
+  if (!quarters || quarters.length === 0) {
+    return {
+      scoreOutOf100: 0,
+      subGradesTenScale: { quota: 0, pipeline: 0, winRate: 0, tenure: 0 },
+    };
+  }
+
+  const r = (role as SalesRole) ?? "AE";
+  const a = anchors(r);
+
+  // Quota: 100% → 100 points; cap at 200% so a single blowout doesn't dominate.
+  const quotaScore = clamp(
+    wAvg(quarters, q =>
+      q.quotaAttainmentPct != null
+        ? Math.min(200, q.quotaAttainmentPct) / 2
+        : null
+    ),
+    0,
+    100
+  );
+
+  // Closed-won $: anchor → 100, linear, capped.
+  const wonScore = clamp(
+    wAvg(quarters, q =>
+      q.closedWonDollars != null ? (q.closedWonDollars / a.closedWon) * 100 : null
+    ),
+    0,
+    100
+  );
+
+  // Pipeline $: anchor → 100.
+  const pipeScore = clamp(
+    wAvg(quarters, q =>
+      q.pipelineDollars != null ? (q.pipelineDollars / a.pipeline) * 100 : null
+    ),
+    0,
+    100
+  );
+
+  // Pipe opps count: anchor → 100.
+  const oppsScore = clamp(
+    wAvg(quarters, q =>
+      q.pipeOpps != null ? (q.pipeOpps / a.pipeOpps) * 100 : null
+    ),
+    0,
+    100
+  );
+
+  // Activity ratio: pipe opps ÷ meetings (capped at 50%); 30% = 100 points.
+  const activityScore = clamp(
+    wAvg(quarters, q => {
+      const meetings = rangeMidpoint(q.meetingsRange);
+      const opps = q.pipeOpps;
+      if (!meetings || meetings <= 0 || opps == null) return null;
+      const ratio = (opps / meetings) * 100; // %
+      return Math.min(100, (ratio / 30) * 100);
+    }),
+    0,
+    100
+  );
+
+  // Peer percentile (placeholder until enough peers; 0-100).
+  const percentileScore = clamp(Number.isFinite(percentile) ? percentile : 50, 0, 100);
+
+  // Weighted total
+  const weighted =
+    quotaScore      * W_QUOTA +
+    wonScore        * W_CLOSED_WON +
+    pipeScore       * W_PIPELINE +
+    oppsScore       * W_PIPE_OPPS +
+    activityScore   * W_ACTIVITY +
+    percentileScore * W_PERCENTILE;
+
+  const scoreOutOf100 = Math.round(clamp(weighted / 100, 0, 100));
+
+  // ─── Sub-grades for the card front (0-10) ───
+  // We keep the `winRate` key for compatibility with the existing
+  // SalesCardFront component; the value is the activity-ratio sub-grade.
+  const tenure = Math.min(10, quarters.length * 1.25); // 8 verifiable quarters → 10
+  return {
+    scoreOutOf100,
+    subGradesTenScale: {
+      quota:    Math.round(quotaScore    / 10),
+      pipeline: Math.round(pipeScore     / 10),
+      winRate:  Math.round(activityScore / 10),
+      tenure:   Math.round(tenure),
+    },
+  };
+}
+
+function clamp(n: number, min: number, max: number): number {
+  if (!Number.isFinite(n)) return min;
+  return Math.max(min, Math.min(max, n));
 }

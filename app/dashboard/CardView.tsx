@@ -1,7 +1,7 @@
 import { SalesCardFront } from "@/components/salescard/SalesCardFront";
 import { SalesCardBack, type QuarterRow } from "@/components/salescard/SalesCardBack";
 import { calculateScore, type QuarterInput } from "@/lib/score";
-import { fmtMoney, fmtPct, fmtCount } from "@/lib/format";
+import { fmtMoney, fmtPct } from "@/lib/format";
 import { tierFor } from "@/lib/tier";
 import type { Card, Quarter, User, SalesRole, VerificationRequest } from "@prisma/client";
 import Link from "next/link";
@@ -23,66 +23,64 @@ export function CardView({ user, card }: Props) {
   const score = card.score ?? 0;
   const tier = tierFor(score);
 
-  // Compute sub-grades for the front of the card
+  // ─── Sub-grades for the card front ────────────────────────────────────
   const scoreInputs: QuarterInput[] = card.quarters.map(q => ({
-    period: q.period,
+    period:               q.period,
     closedWonDollars:     q.closedWonDollars     ? Number(q.closedWonDollars)     : null,
     quotaAttainmentPct:   q.quotaAttainmentPct,
     winRatePct:           q.winRatePct,
     pipelineDollars:      q.pipelineDollars      ? Number(q.pipelineDollars)      : null,
     avgDealSizeDollars:   q.avgDealSizeDollars   ? Number(q.avgDealSizeDollars)   : null,
-    agentPipelineDollars: q.agentPipelineDollars ? Number(q.agentPipelineDollars) : null,
+    pipeOpps:             q.pipeOpps,
+    conversationsRange:   q.conversationsRange,
+    meetingsRange:        q.meetingsRange,
+    targetSegment:        q.targetSegment,
     agentsManaged:        q.agentsManaged,
+    agentPipelineDollars: q.agentPipelineDollars ? Number(q.agentPipelineDollars) : null,
     verified:             q.verified,
   }));
   const computed = calculateScore(role, scoreInputs, card.percentile ?? 50);
 
-  // Format the 8 quarters for the back-of-card table (oldest → newest)
+  // ─── 8-quarter table for the card back ────────────────────────────────
   const sortedQuarters = [...card.quarters].sort((a, b) => {
     if (a.fiscalYear !== b.fiscalYear) return a.fiscalYear - b.fiscalYear;
     return a.fiscalQuarter - b.fiscalQuarter;
   });
 
   const quarterRows: QuarterRow[] = sortedQuarters.map(q => ({
-    period:    q.period,
-    closedWon: fmtMoney(q.closedWonDollars),
-    quota:     fmtPct(q.quotaAttainmentPct),
-    winRate:   fmtPct(q.winRatePct),
-    pipeline:  fmtMoney(q.pipelineDollars),
-    avgDeal:   fmtMoney(q.avgDealSizeDollars),
-    agents:    fmtCount(q.agentsManaged),
-    agentPipe: fmtMoney(q.agentPipelineDollars),
+    period:        q.period,
+    target:        q.targetSegment      ?? "—",
+    conversations: q.conversationsRange ?? "—",
+    meetings:      q.meetingsRange      ?? "—",
+    pipeOpps:      q.pipeOpps != null ? String(q.pipeOpps) : "—",
+    pipeline:      fmtMoney(q.pipelineDollars),
+    closedWon:     fmtMoney(q.closedWonDollars),
+    quota:         fmtPct(q.quotaAttainmentPct),
   }));
 
-  // Totals (sums where appropriate, avgs for percentages)
   const totals: QuarterRow = (() => {
     const num = (v: bigint | null | undefined) => (v ? Number(v) : 0);
-    const sumWon  = sortedQuarters.reduce((a, q) => a + num(q.closedWonDollars), 0);
-    const sumPipe = sortedQuarters.reduce((a, q) => a + num(q.pipelineDollars), 0);
-    const sumAgentPipe = sortedQuarters.reduce((a, q) => a + num(q.agentPipelineDollars), 0);
-    const sumDeal = sortedQuarters.reduce((a, q) => a + num(q.avgDealSizeDollars), 0);
-    const dealCount = sortedQuarters.filter(q => q.avgDealSizeDollars).length;
-    const avgDeal = dealCount > 0 ? sumDeal / dealCount : 0;
+    const sumPipe  = sortedQuarters.reduce((a, q) => a + num(q.pipelineDollars),  0);
+    const sumWon   = sortedQuarters.reduce((a, q) => a + num(q.closedWonDollars), 0);
+    const sumOpps  = sortedQuarters.reduce((a, q) => a + (q.pipeOpps ?? 0), 0);
     const quotaVals = sortedQuarters.map(q => q.quotaAttainmentPct).filter((x): x is number => x != null);
-    const winVals = sortedQuarters.map(q => q.winRatePct).filter((x): x is number => x != null);
-    const avg = (xs: number[]) => xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
-    const latestAgents = [...sortedQuarters].reverse().find(q => q.agentsManaged != null)?.agentsManaged ?? null;
+    const avgQuota = quotaVals.length ? quotaVals.reduce((a, b) => a + b, 0) / quotaVals.length : null;
     return {
-      period:    "TOTAL",
-      closedWon: fmtMoney(sumWon),
-      quota:     fmtPct(avg(quotaVals)),
-      winRate:   fmtPct(avg(winVals)),
-      pipeline:  fmtMoney(sumPipe),
-      avgDeal:   fmtMoney(avgDeal),
-      agents:    fmtCount(latestAgents),
-      agentPipe: fmtMoney(sumAgentPipe),
+      period:        "TOTAL",
+      target:        "—",
+      conversations: "—",
+      meetings:      "—",
+      pipeOpps:      sumOpps > 0 ? String(sumOpps) : "—",
+      pipeline:      fmtMoney(sumPipe),
+      closedWon:     fmtMoney(sumWon),
+      quota:         fmtPct(avgQuota),
     };
   })();
 
   const verifiedCount = sortedQuarters.filter(q => q.verified).length;
   const totalQuarters = sortedQuarters.length;
 
-  const scoutReport = `${firstName(name)}'s ${totalQuarters}-quarter record shows a ${tier.name.toLowerCase()} performance tier with verified track record. ${verifiedCount} of ${totalQuarters} quarters carry full weight.`;
+  const scoutReport = `${firstName(name)}'s ${totalQuarters}-quarter record places them in the ${tier.name} tier. ${verifiedCount} of ${totalQuarters} quarters carry full-weight verification.`;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -213,7 +211,6 @@ function roleLabel(role: SalesRole): string {
 // =========================================================================
 
 function VerificationStatusPanel({ verifications }: { verifications: VerificationRequest[] }) {
-  // newest first
   const sorted = [...verifications].sort((a, b) => b.sentAt.getTime() - a.sentAt.getTime());
   const pending  = sorted.filter(v => v.status === "PENDING");
   const approved = sorted.filter(v => v.status === "APPROVED");

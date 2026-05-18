@@ -1,267 +1,329 @@
 "use client";
 
-import { useState } from "react";
-import { saveKpis, type KpiSubmission } from "./actions";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import type { SalesRole } from "@prisma/client";
+import { saveKpis } from "./actions";
 
-interface QuarterRef {
+// ===========================================================================
+// KpiForm — 8 quarters of inputs with the new column set.
+// Columns (one card per quarter):
+//   Target · Conversations · Meetings · Pipe Opps · Pipe $ · Closed/Won $ · % of Quota
+// AGT and AGT $ are gone.
+// ===========================================================================
+
+const TARGET_OPTIONS = ["SMB", "Mid-Market", "Enterprise", "PubSec", "Other"] as const;
+const RANGE_OPTIONS  = ["<50", "50-100", "100-250", "250+"] as const;
+
+type TargetOpt = (typeof TARGET_OPTIONS)[number] | "";
+type RangeOpt  = (typeof RANGE_OPTIONS)[number]  | "";
+
+interface QuarterDescriptor {
   period: string;
   fiscalYear: number;
   fiscalQuarter: number;
 }
 
-interface QuarterRow {
-  closedWonRaw: string;
-  quotaPctRaw: string;
-  winRateRaw: string;
-  pipelineRaw: string;
-  dealSizeRaw: string;
-  agentPipeRaw: string;
+interface QuarterFormState {
+  period: string;
+  fiscalYear: number;
+  fiscalQuarter: number;
+  targetSegment:      TargetOpt;
+  conversationsRange: RangeOpt;
+  meetingsRange:      RangeOpt;
+  pipeOpps:           string;  // numeric string for controlled input
+  pipelineDollars:    string;
+  closedWonDollars:   string;
+  quotaAttainmentPct: string;
 }
 
-const EMPTY_ROW: QuarterRow = {
-  closedWonRaw: "",
-  quotaPctRaw: "",
-  winRateRaw: "",
-  pipelineRaw: "",
-  dealSizeRaw: "",
-  agentPipeRaw: "",
-};
+interface Props {
+  quarters: QuarterDescriptor[];
+  initialRole: SalesRole;
+  /** Optional pre-populated values for editing an existing card. */
+  initialData?: Partial<QuarterFormState>[];
+}
 
-export function KpiForm({
-  quarters,
-  initialRole = "AE",
-  defaultRows,
-  initialAgents = "",
-}: {
-  quarters: QuarterRef[];
-  initialRole?: SalesRole;
-  defaultRows?: QuarterRow[];
-  initialAgents?: string;
-}) {
+export function KpiForm({ quarters, initialRole, initialData }: Props) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
   const [role, setRole] = useState<SalesRole>(initialRole);
-  const [agentsManagedRaw, setAgentsManagedRaw] = useState<string>(initialAgents);
-  const [rows, setRows] = useState<QuarterRow[]>(
-    defaultRows && defaultRows.length === 8 ? defaultRows : quarters.map(() => ({ ...EMPTY_ROW }))
+  const [rows, setRows] = useState<QuarterFormState[]>(() =>
+    quarters.map((q, i) => ({
+      period:             q.period,
+      fiscalYear:         q.fiscalYear,
+      fiscalQuarter:      q.fiscalQuarter,
+      targetSegment:      ((initialData?.[i]?.targetSegment      as TargetOpt) || ""),
+      conversationsRange: ((initialData?.[i]?.conversationsRange as RangeOpt)  || ""),
+      meetingsRange:      ((initialData?.[i]?.meetingsRange      as RangeOpt)  || ""),
+      pipeOpps:            (initialData?.[i]?.pipeOpps          ?? "").toString(),
+      pipelineDollars:     (initialData?.[i]?.pipelineDollars   ?? "").toString(),
+      closedWonDollars:    (initialData?.[i]?.closedWonDollars  ?? "").toString(),
+      quotaAttainmentPct:  (initialData?.[i]?.quotaAttainmentPct?? "").toString(),
+    }))
   );
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const updateRow = (i: number, field: keyof QuarterRow, value: string) => {
-    setRows(prev => prev.map((r, idx) => (idx === i ? { ...r, [field]: value } : r)));
+  const update = (idx: number, patch: Partial<QuarterFormState>) => {
+    setRows(prev => prev.map((r, i) => (i === idx ? { ...r, ...patch } : r)));
   };
 
-  const onSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setSubmitting(true);
 
-    try {
-      // Validate: require at least one filled quarter
-      const anyFilled = rows.some(r =>
-        r.closedWonRaw.trim() || r.pipelineRaw.trim() || r.quotaPctRaw.trim()
-      );
-      if (!anyFilled) {
-        setError("Add at least one quarter's data before generating your card.");
-        setSubmitting(false);
-        return;
+    const payload = {
+      role,
+      quarters: rows.map(r => ({
+        period:             r.period,
+        fiscalYear:         r.fiscalYear,
+        fiscalQuarter:      r.fiscalQuarter,
+        targetSegment:      r.targetSegment      || null,
+        conversationsRange: r.conversationsRange || null,
+        meetingsRange:      r.meetingsRange      || null,
+        pipeOpps:           parseIntSafe(r.pipeOpps),
+        pipelineDollars:    parseIntSafe(r.pipelineDollars),
+        closedWonDollars:   parseIntSafe(r.closedWonDollars),
+        quotaAttainmentPct: parseFloatSafe(r.quotaAttainmentPct),
+      })),
+    };
+
+    startTransition(async () => {
+      try {
+        const res = await saveKpis(payload);
+        if (!res?.ok) {
+          setError(res?.error || "Couldn't save your stats. Try again.");
+          return;
+        }
+        router.push("/dashboard");
+        router.refresh();
+      } catch (err) {
+        setError((err as Error).message || "Something went wrong. Try again.");
       }
-
-      const submission: KpiSubmission = {
-        role,
-        agentsManaged: parseInt(agentsManagedRaw, 10) || null,
-        quarters: quarters.map((q, i) => ({
-          period: q.period,
-          fiscalYear: q.fiscalYear,
-          fiscalQuarter: q.fiscalQuarter,
-          closedWonDollars:     parseMoney(rows[i].closedWonRaw),
-          quotaAttainmentPct:   parsePct(rows[i].quotaPctRaw),
-          winRatePct:           parsePct(rows[i].winRateRaw),
-          pipelineDollars:      parseMoney(rows[i].pipelineRaw),
-          avgDealSizeDollars:   parseMoney(rows[i].dealSizeRaw),
-          agentPipelineDollars: parseMoney(rows[i].agentPipeRaw),
-        })),
-      };
-
-      await saveKpis(submission);
-      // saveKpis() ends with redirect("/dashboard") — we won't reach here on success
-    } catch (err) {
-      // NEXT_REDIRECT errors from server action are thrown but handled by the runtime
-      const msg = (err as Error)?.message || "Something went wrong. Try again?";
-      if (/redirect/i.test(msg)) {
-        // server action successfully redirected — let Next.js handle it
-        return;
-      }
-      setError(msg);
-      setSubmitting(false);
-    }
+    });
   };
 
   return (
-    <form onSubmit={onSubmit} className="space-y-6">
-      {/* Role + agents */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <label className="block">
-          <div className="text-sm font-bold text-gray-700 mb-1.5">Your role</div>
-          <select
-            value={role}
-            onChange={e => setRole(e.target.value as SalesRole)}
-            className="w-full rounded-xl border border-gray-300 px-4 py-2.5 focus:outline-none focus:border-[#3478C0] bg-white"
-          >
-            <option value="AE">Account Executive (AE)</option>
-            <option value="BDR">Business Development Rep (BDR)</option>
-            <option value="SDR">Sales Development Rep (SDR)</option>
-          </select>
-        </label>
-        <label className="block">
-          <div className="text-sm font-bold text-gray-700 mb-1.5">
-            AI agents under management <span className="text-gray-400 font-normal">(current count)</span>
-          </div>
-          <input
-            type="text"
-            inputMode="numeric"
-            placeholder="0"
-            value={agentsManagedRaw}
-            onChange={e => setAgentsManagedRaw(e.target.value)}
-            className="w-full rounded-xl border border-gray-300 px-4 py-2.5 focus:outline-none focus:border-[#3478C0]"
-          />
-        </label>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Role selector */}
+      <div className="bg-white border border-gray-200 rounded-2xl p-5">
+        <div className="text-xs font-black tracking-widest text-[#3478C0] uppercase mb-3">Your role</div>
+        <div className="flex flex-wrap gap-2">
+          {(["AE", "BDR", "SDR"] as SalesRole[]).map(r => (
+            <button
+              key={r}
+              type="button"
+              onClick={() => setRole(r)}
+              className={`px-5 py-2.5 rounded-full font-bold text-sm transition border ${
+                role === r
+                  ? "bg-[#3478C0] text-white border-[#3478C0]"
+                  : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
+              }`}
+            >
+              {r}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Quarters table */}
-      <div className="border border-gray-200 rounded-2xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
-              <tr>
-                <th className="text-left px-4 py-3 font-bold sticky left-0 bg-gray-50 z-10">Quarter</th>
-                <th className="text-right px-3 py-3 font-bold">Closed-won $</th>
-                <th className="text-right px-3 py-3 font-bold">Quota %</th>
-                <th className="text-right px-3 py-3 font-bold">Win rate %</th>
-                <th className="text-right px-3 py-3 font-bold">Pipeline $</th>
-                <th className="text-right px-3 py-3 font-bold text-gray-400">Avg deal $</th>
-                <th className="text-right px-3 py-3 font-bold text-gray-400">Agent pipe $</th>
-              </tr>
-            </thead>
-            <tbody>
-              {quarters.map((q, i) => (
-                <tr key={q.period} className="border-t border-gray-100 hover:bg-blue-50/30">
-                  <td className="px-4 py-2.5 font-bold text-gray-900 sticky left-0 bg-white whitespace-nowrap">
-                    {q.period}
-                  </td>
-                  <td className="px-2 py-1.5">
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      placeholder="580K"
-                      value={rows[i].closedWonRaw}
-                      onChange={e => updateRow(i, "closedWonRaw", e.target.value)}
-                      className="w-24 text-right px-2 py-1.5 rounded-md border border-gray-200 focus:outline-none focus:border-[#3478C0]"
-                    />
-                  </td>
-                  <td className="px-2 py-1.5">
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      placeholder="88"
-                      value={rows[i].quotaPctRaw}
-                      onChange={e => updateRow(i, "quotaPctRaw", e.target.value)}
-                      className="w-20 text-right px-2 py-1.5 rounded-md border border-gray-200 focus:outline-none focus:border-[#3478C0]"
-                    />
-                  </td>
-                  <td className="px-2 py-1.5">
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      placeholder="24"
-                      value={rows[i].winRateRaw}
-                      onChange={e => updateRow(i, "winRateRaw", e.target.value)}
-                      className="w-20 text-right px-2 py-1.5 rounded-md border border-gray-200 focus:outline-none focus:border-[#3478C0]"
-                    />
-                  </td>
-                  <td className="px-2 py-1.5">
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      placeholder="1.6M"
-                      value={rows[i].pipelineRaw}
-                      onChange={e => updateRow(i, "pipelineRaw", e.target.value)}
-                      className="w-24 text-right px-2 py-1.5 rounded-md border border-gray-200 focus:outline-none focus:border-[#3478C0]"
-                    />
-                  </td>
-                  <td className="px-2 py-1.5">
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      placeholder="72K"
-                      value={rows[i].dealSizeRaw}
-                      onChange={e => updateRow(i, "dealSizeRaw", e.target.value)}
-                      className="w-20 text-right px-2 py-1.5 rounded-md border border-gray-200 focus:outline-none focus:border-[#3478C0]"
-                    />
-                  </td>
-                  <td className="px-2 py-1.5 pr-3">
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      placeholder="0"
-                      value={rows[i].agentPipeRaw}
-                      onChange={e => updateRow(i, "agentPipeRaw", e.target.value)}
-                      className="w-20 text-right px-2 py-1.5 rounded-md border border-gray-200 focus:outline-none focus:border-[#3478C0]"
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="px-4 py-2 bg-gray-50 border-t border-gray-200 text-xs text-gray-500">
-          Hint: type values like <code className="text-gray-700">580K</code>, <code className="text-gray-700">1.6M</code>, or <code className="text-gray-700">580000</code>. Percentages don&apos;t need the % sign. Leave blank for any quarter you don&apos;t have data for.
-        </div>
+      {/* Quarter rows */}
+      <div className="space-y-4">
+        {rows.map((row, i) => (
+          <div key={row.period} className="bg-white border border-gray-200 rounded-2xl p-5">
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-[#0F0F0F] text-[#F5B739] flex items-center justify-center font-black text-sm">
+                  {row.fiscalQuarter}
+                </div>
+                <div>
+                  <div className="text-lg font-black tracking-tight">{row.period}</div>
+                  <div className="text-xs text-gray-500">Quarter {i + 1} of {rows.length}</div>
+                </div>
+              </div>
+              <div className="text-xs text-gray-500">Leave blank if you don&apos;t have the number.</div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Field label="Target segment">
+                <select
+                  value={row.targetSegment}
+                  onChange={e => update(i, { targetSegment: e.target.value as TargetOpt })}
+                  className="form-select"
+                >
+                  <option value="">—</option>
+                  {TARGET_OPTIONS.map(o => (
+                    <option key={o} value={o}>{o}</option>
+                  ))}
+                </select>
+              </Field>
+
+              <Field label="Conversations / qtr">
+                <select
+                  value={row.conversationsRange}
+                  onChange={e => update(i, { conversationsRange: e.target.value as RangeOpt })}
+                  className="form-select"
+                >
+                  <option value="">—</option>
+                  {RANGE_OPTIONS.map(o => (
+                    <option key={o} value={o}>{o}</option>
+                  ))}
+                </select>
+              </Field>
+
+              <Field label="Meetings / qtr">
+                <select
+                  value={row.meetingsRange}
+                  onChange={e => update(i, { meetingsRange: e.target.value as RangeOpt })}
+                  className="form-select"
+                >
+                  <option value="">—</option>
+                  {RANGE_OPTIONS.map(o => (
+                    <option key={o} value={o}>{o}</option>
+                  ))}
+                </select>
+              </Field>
+
+              <Field label="Pipe opps">
+                <input
+                  type="number"
+                  min={0}
+                  inputMode="numeric"
+                  value={row.pipeOpps}
+                  onChange={e => update(i, { pipeOpps: e.target.value })}
+                  placeholder="0"
+                  className="form-input"
+                />
+              </Field>
+
+              <Field label="Pipe $">
+                <CurrencyInput
+                  value={row.pipelineDollars}
+                  onChange={(v) => update(i, { pipelineDollars: v })}
+                />
+              </Field>
+
+              <Field label="Closed/Won $">
+                <CurrencyInput
+                  value={row.closedWonDollars}
+                  onChange={(v) => update(i, { closedWonDollars: v })}
+                />
+              </Field>
+
+              <Field label="% of Quota">
+                <div className="relative">
+                  <input
+                    type="number"
+                    min={0}
+                    step="1"
+                    inputMode="numeric"
+                    value={row.quotaAttainmentPct}
+                    onChange={e => update(i, { quotaAttainmentPct: e.target.value })}
+                    placeholder="100"
+                    className="form-input pr-8"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">%</span>
+                </div>
+              </Field>
+            </div>
+          </div>
+        ))}
       </div>
 
       {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
       )}
 
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <p className="text-xs text-gray-500 max-w-md">
-          We&apos;ll calculate your <strong>SalesCard Score</strong> from these numbers. You can edit them anytime, and you control whether your card is private, unlisted, or recruiter-visible.
-        </p>
+      <div className="flex items-center justify-end gap-3 pt-2">
         <button
           type="submit"
-          disabled={submitting}
-          className="inline-flex items-center gap-2 bg-[#3478C0] hover:bg-[#1E5A9C] disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold px-7 py-3.5 rounded-full transition"
+          disabled={isPending}
+          className="inline-flex items-center gap-2 bg-[#3478C0] hover:bg-[#1E5A9C] disabled:opacity-60 text-white font-bold px-7 py-3.5 rounded-full transition"
         >
-          {submitting ? "Generating..." : "Generate my SalesCard →"}
+          {isPending ? "Saving…" : "Save & calculate my score →"}
         </button>
       </div>
+
+      <style jsx>{`
+        :global(.form-input),
+        :global(.form-select) {
+          width: 100%;
+          padding: 10px 12px;
+          border: 1.5px solid #e5e7eb;
+          border-radius: 10px;
+          font-size: 14px;
+          background: white;
+          color: #111827;
+          transition: border-color .12s ease;
+          font-family: inherit;
+        }
+        :global(.form-input):focus,
+        :global(.form-select):focus {
+          outline: none;
+          border-color: #3478c0;
+        }
+        :global(.form-select) {
+          appearance: none;
+          background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+          background-repeat: no-repeat;
+          background-position: right 10px center;
+          background-size: 14px;
+          padding-right: 32px;
+        }
+      `}</style>
     </form>
   );
 }
 
-// === parsers ===
+// ---------- helpers ----------
 
-/** Parse "580K", "$1,200,000", "1.6M", "580000" → number or null. */
-function parseMoney(input: string | null | undefined): number | null {
-  if (input == null) return null;
-  const s = input.trim().toLowerCase().replace(/[$,\s_]/g, "");
-  if (!s) return null;
-  let mult = 1;
-  let numStr = s;
-  if (s.endsWith("b")) { mult = 1_000_000_000; numStr = s.slice(0, -1); }
-  else if (s.endsWith("m")) { mult = 1_000_000; numStr = s.slice(0, -1); }
-  else if (s.endsWith("k")) { mult = 1_000; numStr = s.slice(0, -1); }
-  const n = parseFloat(numStr);
-  if (!Number.isFinite(n)) return null;
-  return n * mult;
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <div className="text-[11px] font-black tracking-widest text-gray-500 uppercase mb-1.5">
+        {label}
+      </div>
+      {children}
+    </label>
+  );
 }
 
-/** Parse "88", "88%", "138" → number or null. */
-function parsePct(input: string | null | undefined): number | null {
-  if (input == null) return null;
-  const s = input.trim().replace(/%/g, "").replace(/,/g, "");
-  if (!s) return null;
-  const n = parseFloat(s);
-  if (!Number.isFinite(n)) return null;
-  return n;
+function CurrencyInput({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="relative">
+      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
+      <input
+        type="number"
+        min={0}
+        step="1"
+        inputMode="numeric"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="0"
+        className="form-input pl-7"
+      />
+    </div>
+  );
+}
+
+function parseIntSafe(s: string): number | null {
+  const v = s.trim();
+  if (!v) return null;
+  const n = parseInt(v, 10);
+  return Number.isFinite(n) ? n : null;
+}
+
+function parseFloatSafe(s: string): number | null {
+  const v = s.trim();
+  if (!v) return null;
+  const n = parseFloat(v);
+  return Number.isFinite(n) ? n : null;
 }

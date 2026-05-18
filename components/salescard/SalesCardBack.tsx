@@ -1,231 +1,230 @@
-"use client";
-
 import { tierFor } from "@/lib/tier";
 
+// ===========================================================================
+// SalesCardBack — eight-quarter table with the new column set:
+//   Qtr · Target · Conversations · Meetings · Pipe Opps · Pipe $ · Closed/Won $ · % of Quota
+// ===========================================================================
+
 export interface QuarterRow {
-  period: string;       // "Q3 24"
-  closedWon: string;    // formatted "$580K"
-  quota: string;        // formatted "88%"
-  winRate: string;      // formatted "24%"
-  pipeline: string;     // formatted "$1.6M"
-  avgDeal: string;      // formatted "$72K"
-  agents: string;       // formatted "0"
-  agentPipe: string;    // formatted "—" or "$50K"
+  period: string;        // e.g. "FY24Q1"
+  target: string;        // SMB / Mid-Market / Enterprise / PubSec / Other / —
+  conversations: string; // <50 / 50-100 / 100-250 / 250+ / —
+  meetings: string;      // <50 / 50-100 / 100-250 / 250+ / —
+  pipeOpps: string;      // number formatted, or —
+  pipeline: string;      // money formatted, or —
+  closedWon: string;     // money formatted, or —
+  quota: string;         // percentage formatted, or —
 }
 
-export interface SalesCardBackProps {
+interface Props {
   name: string;
   role: string;
   score: number;
-  company?: string;
-  region?: string;
-  segment?: string;
-  startedQuarter?: string; // e.g. "Q3 24"
-  verifiedCount?: number;  // e.g. 8
-  totalCount?: number;     // e.g. 8
-  quarters: QuarterRow[];  // expects exactly 8
-  totals: QuarterRow;      // aggregated row
+  company: string;
+  segment: string;
+  region: string;
+  startedQuarter: string;
+  verifiedCount: number;
+  totalCount: number;
+  quarters: QuarterRow[];
+  totals: QuarterRow;
   scoutReport?: string;
-  percentileText?: string; // e.g. "TOP 8% AE"
-  className?: string;
+  percentileText?: string;
 }
 
-/** SalesCard back-of-card: Topps-style 8-quarter table + scout report. */
 export function SalesCardBack({
   name,
   role,
   score,
-  company = "ACME CORP",
-  region = "WEST",
-  segment = "ENTERPRISE",
-  startedQuarter = "Q3 24",
-  verifiedCount = 8,
-  totalCount = 8,
+  company,
+  segment,
+  region,
+  startedQuarter,
+  verifiedCount,
+  totalCount,
   quarters,
   totals,
   scoutReport,
-  percentileText = "TOP 8% AE",
-  className,
-}: SalesCardBackProps) {
+  percentileText,
+}: Props) {
   const tier = tierFor(score);
-  const tierColor = `#${tier.color}`;
-  const tierTextOnBar = tier.textColorOn === "DARK" ? "#0F0F0F" : "#FFFFFF";
-
-  // table layout (SVG-coordinate system, viewBox 460×640)
-  const tblX = 20;
-  const tblY = 156;
-  const tblW = 420;
-  const rowH = 26;
-  // 8 columns with weighted widths
-  const colRatios = [0.115, 0.130, 0.110, 0.085, 0.135, 0.120, 0.080, 0.225];
-  const colW = colRatios.map(r => r * tblW);
-  const colX: number[] = [];
-  {
-    let acc = tblX;
-    for (const w of colW) { colX.push(acc); acc += w; }
-  }
-  const headers = ["Q", "WON $", "QUOTA", "WIN", "PIPE $", "DEAL $", "AGT", "AGT $"];
-
-  const txt = (s: string) => (s == null || s === "" ? "—" : s);
+  const tierBg = `#${tier.color}`;
+  const tierText = tier.textColorOn === "DARK" ? "#0F0F0F" : "#FFFFFF";
 
   return (
-    <svg
-      className={className}
-      viewBox="0 0 460 640"
-      xmlns="http://www.w3.org/2000/svg"
-      role="img"
-      aria-label={`SalesCard back for ${name}, 8-quarter record`}
+    <div
+      className="rounded-2xl overflow-hidden shadow-xl border border-gray-200 bg-[#F5F5EE]"
+      style={{ fontFeatureSettings: "'tnum' 1" }}
     >
-      {/* slab */}
-      <rect x="0" y="0" width="460" height="640" rx="18" fill="#DDDCD3" stroke="#B8B6AC" strokeWidth="2" />
-      {/* body */}
-      <rect x="14" y="14" width="432" height="612" rx="6" fill="#FFFFFF" stroke="#D0D0D0" strokeWidth="0.5" />
-      {/* tier stripe */}
-      <rect x="14" y="14" width="432" height="9" fill={tierColor} />
-      {/* navy header */}
-      <rect x="14" y="23" width="432" height="55" fill="#0A1F44" />
-      {/* card # badge */}
-      <rect x="24" y="34" width="62" height="36" fill="#F5B739" />
-      <text x="55" y="59" fontFamily="Inter, system-ui, sans-serif" fontSize="16" fontWeight="900" fill="#06122B" textAnchor="middle">
-        #{score}
-      </text>
-      <text x="100" y="58" fontFamily="Inter, system-ui, sans-serif" fontSize="17" fontWeight="900" fill="#FFFFFF">
-        {name.toUpperCase()}
-      </text>
+      {/* ====== Header strip: brand + tier color ribbon ====== */}
+      <div className="relative bg-[#0F0F0F] text-white">
+        <div className="h-2" style={{ background: tierBg }} />
+        <div className="px-5 py-4 flex items-center justify-between gap-3">
+          <div className="text-[11px] font-black tracking-[0.25em] text-[#F5B739]">
+            VERIFIED · SERIES 1
+          </div>
+          <div className="font-black text-lg tracking-tight">
+            <span style={{ color: "#5294E0" }}>Sales</span>
+            <span style={{ color: "#10B981" }}>Card</span>
+          </div>
+        </div>
+      </div>
 
-      {/* bio row */}
-      <rect x="14" y="78" width="432" height="34" fill="#F8F5EE" />
-      <text x="30" y="100" fontFamily="Inter, system-ui, sans-serif" fontSize="8" fontWeight="900" fill="#0A1F44" letterSpacing="1">
-        {role.toUpperCase()} · {company} · {segment} · {region}
-      </text>
-      <text x="430" y="100" fontFamily="Inter, system-ui, sans-serif" fontSize="8" fontWeight="900" fill="#0A1F44" letterSpacing="1" textAnchor="end">
-        STARTED {startedQuarter} · {verifiedCount}/{totalCount} VERIFIED
-      </text>
-
-      {/* section header */}
-      <rect x="14" y="112" width="432" height="30" fill="#0F0F0F" />
-      <text x="30" y="132" fontFamily="Inter, system-ui, sans-serif" fontSize="10" fontWeight="900" fill="#F5B739" letterSpacing="1.5">
-        VERIFIED 8-QUARTER RECORD
-      </text>
-      <text x="430" y="132" fontFamily="Inter, system-ui, sans-serif" fontSize="8" fontWeight="900" fill={tierColor} letterSpacing="1" fontStyle="italic" textAnchor="end">
-        LEAGUE LEADER
-      </text>
-
-      {/* table header row */}
-      <rect x={tblX} y={tblY - 22} width={tblW} height={22} fill="#0A1F44" />
-      {headers.map((h, i) => {
-        const isFirst = i === 0;
-        const x = colX[i] + (isFirst ? 8 : colW[i] - 8);
-        return (
-          <text
-            key={h}
-            x={x}
-            y={tblY - 8}
-            fontFamily="Inter, system-ui, sans-serif"
-            fontSize="8"
-            fontWeight="900"
-            fill="#F5B739"
-            textAnchor={isFirst ? "start" : "end"}
-          >
-            {h}
-          </text>
-        );
-      })}
-
-      {/* data rows */}
-      {quarters.map((q, ri) => {
-        const y = tblY + ri * rowH;
-        const fillBg = ri % 2 === 0 ? "#FFFFFF" : "#F4F1E8";
-        const vals = [q.period, q.closedWon, q.quota, q.winRate, q.pipeline, q.avgDeal, q.agents, q.agentPipe];
-        return (
-          <g key={q.period + ri}>
-            <rect x={tblX} y={y} width={tblW} height={rowH} fill={fillBg} stroke="#E5E5E5" strokeWidth="0.5" />
-            {vals.map((v, ci) => {
-              const isFirst = ci === 0;
-              const x = colX[ci] + (isFirst ? 8 : colW[ci] - 8);
-              return (
-                <text
-                  key={ci}
-                  x={x}
-                  y={y + rowH / 2 + 3}
-                  fontFamily="Inter, system-ui, sans-serif"
-                  fontSize="9.5"
-                  fontWeight={isFirst ? "700" : "500"}
-                  fill="#111827"
-                  textAnchor={isFirst ? "start" : "end"}
-                >
-                  {txt(v)}
-                </text>
-              );
-            })}
-          </g>
-        );
-      })}
-
-      {/* totals row */}
-      {(() => {
-        const y = tblY + quarters.length * rowH;
-        const totVals = [totals.period, totals.closedWon, totals.quota, totals.winRate, totals.pipeline, totals.avgDeal, totals.agents, totals.agentPipe];
-        return (
-          <g>
-            <rect x={tblX} y={y} width={tblW} height={rowH + 2} fill="#06122B" />
-            {totVals.map((v, ci) => {
-              const isFirst = ci === 0;
-              const x = colX[ci] + (isFirst ? 8 : colW[ci] - 8);
-              return (
-                <text
-                  key={ci}
-                  x={x}
-                  y={y + rowH / 2 + 3}
-                  fontFamily="Inter, system-ui, sans-serif"
-                  fontSize="9.5"
-                  fontWeight="900"
-                  fill={isFirst ? "#FFFFFF" : "#F5B739"}
-                  textAnchor={isFirst ? "start" : "end"}
-                >
-                  {txt(v)}
-                </text>
-              );
-            })}
-          </g>
-        );
-      })()}
-
-      {/* scout report */}
-      {scoutReport ? (
-        <>
-          <rect x="14" y="488" width="432" height="120" fill="#F8F5EE" />
-          <rect x="14" y="488" width="8" height="120" fill={tierColor} />
-          <text x="32" y="506" fontFamily="Inter, system-ui, sans-serif" fontSize="8" fontWeight="900" fill="#0A1F44" letterSpacing="1.5">
-            SCOUT REPORT
-          </text>
-          <foreignObject x="32" y="512" width="404" height="92">
-            <p
-              style={{
-                margin: 0,
-                padding: 0,
-                fontFamily: "Inter, system-ui, sans-serif",
-                fontSize: "10px",
-                fontStyle: "italic",
-                color: "#111827",
-                lineHeight: 1.45,
-              }}
+      {/* ====== Identity row ====== */}
+      <div className="bg-white px-5 py-4 border-b border-gray-200">
+        <div className="flex items-center justify-between gap-4 flex-wrap mb-2">
+          <div>
+            <div className="text-[10px] font-black tracking-widest text-gray-400 uppercase mb-1">
+              REP
+            </div>
+            <div className="font-black text-xl tracking-tight">{name}</div>
+            <div className="text-sm text-gray-600 font-semibold">{role}</div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div
+              className="w-12 h-12 rounded-lg flex items-center justify-center font-black text-2xl"
+              style={{ background: tierBg, color: tierText }}
             >
-              {scoutReport}
-            </p>
-          </foreignObject>
-        </>
+              {score}
+            </div>
+            <div className="text-right">
+              <div className="text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                Tier
+              </div>
+              <div className="text-xs font-black uppercase tracking-wider" style={{ color: tierBg }}>
+                {tier.name}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <Meta label="Company"  value={company} />
+          <Meta label="Segment"  value={segment} />
+          <Meta label="Region"   value={region} />
+          <Meta label="Started"  value={startedQuarter} />
+        </div>
+      </div>
+
+      {/* ====== Quarter table ====== */}
+      <div className="bg-white overflow-x-auto">
+        <table className="w-full text-xs tabular-nums">
+          <thead>
+            <tr className="bg-gray-50 border-b border-gray-200 text-gray-500">
+              <Th className="text-left">Qtr</Th>
+              <Th>Target</Th>
+              <Th>Conversations</Th>
+              <Th>Meetings</Th>
+              <Th>Pipe Opps</Th>
+              <Th>Pipe $</Th>
+              <Th>Closed/Won $</Th>
+              <Th>% of Quota</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {quarters.map((q) => (
+              <tr key={q.period} className="border-b border-gray-100 hover:bg-gray-50/60">
+                <Td className="text-left font-bold text-gray-900">{q.period}</Td>
+                <Td>{q.target}</Td>
+                <Td>{q.conversations}</Td>
+                <Td>{q.meetings}</Td>
+                <Td>{q.pipeOpps}</Td>
+                <Td>{q.pipeline}</Td>
+                <Td>{q.closedWon}</Td>
+                <Td>{q.quota}</Td>
+              </tr>
+            ))}
+            {/* Totals row */}
+            <tr className="bg-gray-900 text-white">
+              <Td className="text-left font-black tracking-widest">{totals.period}</Td>
+              <Td className="text-gray-400">—</Td>
+              <Td className="text-gray-400">—</Td>
+              <Td className="text-gray-400">—</Td>
+              <Td className="font-bold">{totals.pipeOpps}</Td>
+              <Td className="font-bold">{totals.pipeline}</Td>
+              <Td className="font-bold">{totals.closedWon}</Td>
+              <Td className="font-bold" style={{ color: "#F5B739" }}>{totals.quota}</Td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* ====== Verification + percentile strip ====== */}
+      <div className="bg-white px-5 py-3 border-t border-b border-gray-200 flex items-center justify-between flex-wrap gap-2 text-xs">
+        <div className="flex items-center gap-2 text-emerald-700 font-bold">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          {verifiedCount} of {totalCount} quarters verified
+        </div>
+        {percentileText ? (
+          <div className="font-black tracking-widest text-[#3478C0] text-[11px]">
+            {percentileText}
+          </div>
+        ) : null}
+      </div>
+
+      {/* ====== Scout report ====== */}
+      {scoutReport ? (
+        <div className="bg-[#F5F5EE] px-5 py-4">
+          <div className="text-[10px] font-black tracking-widest text-gray-500 uppercase mb-1.5">
+            Scout Report
+          </div>
+          <p className="text-[13px] leading-relaxed text-gray-800 italic">
+            &ldquo;{scoutReport}&rdquo;
+          </p>
+        </div>
       ) : null}
 
-      {/* footer */}
-      <rect x="14" y="608" width="432" height="18" fill="#06122B" />
-      <rect x="14" y="608" width={432 * 0.42} height="18" fill={tierColor} />
-      <text x="22" y="621" fontFamily="Inter, system-ui, sans-serif" fontSize="9" fontWeight="900" fill={tierTextOnBar} letterSpacing="1.5">
-        SALESCARD SCORE
-      </text>
-      <text x="438" y="621" fontFamily="Inter, system-ui, sans-serif" fontSize="9" fontWeight="900" fill="#F5B739" textAnchor="end">
-        {score} · {tier.label} · {percentileText}
-      </text>
-    </svg>
+      {/* ====== Footer ribbon ====== */}
+      <div className="relative bg-[#0F0F0F] text-white">
+        <div className="h-1.5" style={{ background: tierBg }} />
+        <div className="px-5 py-3 flex items-center justify-between gap-3">
+          <div className="text-[10px] tracking-widest font-bold text-gray-400">
+            app.salescard.ai
+          </div>
+          <div className="text-[10px] font-black tracking-widest" style={{ color: "#F5B739" }}>
+            {tier.name.toUpperCase()}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------- helpers ----------
+
+function Meta({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="text-[10px] font-black tracking-widest text-gray-400 uppercase mb-0.5">
+        {label}
+      </div>
+      <div className="font-semibold text-gray-900 truncate">{value}</div>
+    </div>
+  );
+}
+
+function Th({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <th className={`px-2.5 py-2 font-black tracking-widest uppercase text-[10px] text-right ${className}`}>
+      {children}
+    </th>
+  );
+}
+
+function Td({
+  children,
+  className = "",
+  style,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <td className={`px-2.5 py-2 text-right ${className}`} style={style}>
+      {children}
+    </td>
   );
 }
