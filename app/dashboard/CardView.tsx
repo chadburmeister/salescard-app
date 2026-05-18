@@ -23,7 +23,6 @@ export function CardView({ user, card }: Props) {
   const score = card.score ?? 0;
   const tier = tierFor(score);
 
-  // ─── Sub-grades for the card front ────────────────────────────────────
   const scoreInputs: QuarterInput[] = card.quarters.map(q => ({
     period:               q.period,
     closedWonDollars:     q.closedWonDollars     ? Number(q.closedWonDollars)     : null,
@@ -41,7 +40,6 @@ export function CardView({ user, card }: Props) {
   }));
   const computed = calculateScore(role, scoreInputs, card.percentile ?? 50);
 
-  // ─── 8-quarter table for the card back ────────────────────────────────
   const sortedQuarters = [...card.quarters].sort((a, b) => {
     if (a.fiscalYear !== b.fiscalYear) return a.fiscalYear - b.fiscalYear;
     return a.fiscalQuarter - b.fiscalQuarter;
@@ -60,9 +58,9 @@ export function CardView({ user, card }: Props) {
 
   const totals: QuarterRow = (() => {
     const num = (v: bigint | null | undefined) => (v ? Number(v) : 0);
-    const sumPipe  = sortedQuarters.reduce((a, q) => a + num(q.pipelineDollars),  0);
-    const sumWon   = sortedQuarters.reduce((a, q) => a + num(q.closedWonDollars), 0);
-    const sumOpps  = sortedQuarters.reduce((a, q) => a + (q.pipeOpps ?? 0), 0);
+    const sumPipe = sortedQuarters.reduce((a, q) => a + num(q.pipelineDollars),  0);
+    const sumWon  = sortedQuarters.reduce((a, q) => a + num(q.closedWonDollars), 0);
+    const sumOpps = sortedQuarters.reduce((a, q) => a + (q.pipeOpps ?? 0), 0);
     const quotaVals = sortedQuarters.map(q => q.quotaAttainmentPct).filter((x): x is number => x != null);
     const avgQuota = quotaVals.length ? quotaVals.reduce((a, b) => a + b, 0) / quotaVals.length : null;
     return {
@@ -79,13 +77,11 @@ export function CardView({ user, card }: Props) {
 
   const verifiedCount = sortedQuarters.filter(q => q.verified).length;
   const totalQuarters = sortedQuarters.length;
-
   const scoutReport = `${firstName(name)}'s ${totalQuarters}-quarter record places them in the ${tier.name} tier. ${verifiedCount} of ${totalQuarters} quarters carry full-weight verification.`;
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-6xl mx-auto px-6 py-12">
-        {/* Header */}
         <div className="flex items-center justify-between mb-10 flex-wrap gap-4">
           <div className="flex items-center gap-4">
             <PhotoUploadDialog currentImage={user.image ?? null} userName={name} />
@@ -95,20 +91,14 @@ export function CardView({ user, card }: Props) {
             </div>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
-            <Link
-              href="/dashboard/edit"
-              className="inline-flex items-center gap-2 text-gray-700 hover:bg-gray-100 font-semibold px-5 py-2.5 rounded-full transition"
-            >
+            <Link href="/dashboard/edit" className="inline-flex items-center gap-2 text-gray-700 hover:bg-gray-100 font-semibold px-5 py-2.5 rounded-full transition">
               Edit my stats
             </Link>
             <RequestVerificationDialog
               quarterPeriods={sortedQuarters.map(q => q.period)}
               alreadyVerified={sortedQuarters.filter(q => q.verified).map(q => q.period)}
             />
-            <Link
-              href={`/u/${card.username}`}
-              className="inline-flex items-center gap-2 text-gray-700 hover:bg-gray-100 font-semibold px-5 py-2.5 rounded-full transition"
-            >
+            <Link href={`/u/${card.username}`} className="inline-flex items-center gap-2 text-gray-700 hover:bg-gray-100 font-semibold px-5 py-2.5 rounded-full transition">
               View public card
             </Link>
             <ShareDialog
@@ -121,12 +111,10 @@ export function CardView({ user, card }: Props) {
           </div>
         </div>
 
-        {/* Verification status panel */}
         {card.verifications && card.verifications.length > 0 && (
           <VerificationStatusPanel verifications={card.verifications} />
         )}
 
-        {/* Score banner */}
         <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-10 flex items-center gap-6 flex-wrap">
           <div
             className="w-20 h-20 rounded-full flex items-center justify-center text-white font-black text-3xl"
@@ -154,7 +142,6 @@ export function CardView({ user, card }: Props) {
           </div>
         </div>
 
-        {/* The card */}
         <div className="text-center text-sm font-bold tracking-widest text-gray-400 uppercase mb-6">
           Your card · front + back
         </div>
@@ -165,7 +152,8 @@ export function CardView({ user, card }: Props) {
               name={name}
               role={roleLabel(role)}
               score={score}
-              linkedinHandle={card.username}
+              photoUrl={user.image ?? undefined}
+              linkedinHandle={linkedinHandleFor(user)}
               subGrades={computed.subGradesTenScale}
             />
           </div>
@@ -206,31 +194,27 @@ function roleLabel(role: SalesRole): string {
   }
 }
 
-// =========================================================================
-// Verification status panel — shows pending / approved / rejected requests
-// =========================================================================
+function linkedinHandleFor(u: User): string {
+  if (u.linkedinUrl) {
+    const m = u.linkedinUrl.match(/linkedin\.com\/in\/([^/?#]+)/i);
+    if (m) return m[1];
+    if (!/[\/.]/.test(u.linkedinUrl)) return u.linkedinUrl;
+  }
+  return u.email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+}
 
 function VerificationStatusPanel({ verifications }: { verifications: VerificationRequest[] }) {
   const sorted = [...verifications].sort((a, b) => b.sentAt.getTime() - a.sentAt.getTime());
   const pending  = sorted.filter(v => v.status === "PENDING");
   const approved = sorted.filter(v => v.status === "APPROVED");
   const rejected = sorted.filter(v => v.status === "REJECTED");
-
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-5 mb-8">
-      <div className="text-xs tracking-widest font-bold text-gray-500 uppercase mb-3">
-        Verification activity
-      </div>
+      <div className="text-xs tracking-widest font-bold text-gray-500 uppercase mb-3">Verification activity</div>
       <div className="space-y-2">
-        {pending.map(v => (
-          <Row key={v.id} v={v} variant="pending" />
-        ))}
-        {approved.map(v => (
-          <Row key={v.id} v={v} variant="approved" />
-        ))}
-        {rejected.map(v => (
-          <Row key={v.id} v={v} variant="rejected" />
-        ))}
+        {pending.map(v => (<Row key={v.id} v={v} variant="pending" />))}
+        {approved.map(v => (<Row key={v.id} v={v} variant="approved" />))}
+        {rejected.map(v => (<Row key={v.id} v={v} variant="rejected" />))}
       </div>
     </div>
   );
