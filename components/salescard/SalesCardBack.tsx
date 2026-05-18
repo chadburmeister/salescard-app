@@ -2,18 +2,18 @@ import { tierFor } from "@/lib/tier";
 
 // ===========================================================================
 // SalesCardBack — eight-quarter table with the new column set:
-//   Qtr · Target · Conversations · Meetings · Pipe Opps · Pipe $ · Closed/Won $ · % of Quota
+//   Qtr · Target · Conv · Mtgs · Opps · Pipe $ · Won $ · Quota
 // ===========================================================================
 
 export interface QuarterRow {
-  period: string;        // e.g. "FY24Q1"
-  target: string;        // SMB / Mid-Market / Enterprise / PubSec / Other / —
-  conversations: string; // <50 / 50-100 / 100-250 / 250+ / —
-  meetings: string;      // <50 / 50-100 / 100-250 / 250+ / —
-  pipeOpps: string;      // number formatted, or —
-  pipeline: string;      // money formatted, or —
-  closedWon: string;     // money formatted, or —
-  quota: string;         // percentage formatted, or —
+  period: string;
+  target: string;
+  conversations: string;
+  meetings: string;
+  pipeOpps: string;
+  pipeline: string;
+  closedWon: string;
+  quota: string;
 }
 
 interface Props {
@@ -107,18 +107,28 @@ export function SalesCardBack({
       </div>
 
       {/* ====== Quarter table ====== */}
-      <div className="bg-white overflow-x-auto">
-        <table className="w-full text-xs tabular-nums">
+      <div className="bg-white">
+        <table className="w-full text-[11px] tabular-nums table-fixed">
+          <colgroup>
+            <col style={{ width: "11%" }} />
+            <col style={{ width: "13%" }} />
+            <col style={{ width: "13%" }} />
+            <col style={{ width: "13%" }} />
+            <col style={{ width: "9%" }} />
+            <col style={{ width: "14%" }} />
+            <col style={{ width: "15%" }} />
+            <col style={{ width: "12%" }} />
+          </colgroup>
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200 text-gray-500">
               <Th className="text-left">Qtr</Th>
               <Th>Target</Th>
-              <Th>Conversations</Th>
-              <Th>Meetings</Th>
-              <Th>Pipe Opps</Th>
+              <Th>Conv</Th>
+              <Th>Mtgs</Th>
+              <Th>Opps</Th>
               <Th>Pipe $</Th>
-              <Th>Closed/Won $</Th>
-              <Th>% of Quota</Th>
+              <Th>Won $</Th>
+              <Th>Quota</Th>
             </tr>
           </thead>
           <tbody>
@@ -134,7 +144,6 @@ export function SalesCardBack({
                 <Td>{q.quota}</Td>
               </tr>
             ))}
-            {/* Totals row */}
             <tr className="bg-gray-900 text-white">
               <Td className="text-left font-black tracking-widest">{totals.period}</Td>
               <Td className="text-gray-400">—</Td>
@@ -207,7 +216,7 @@ function Meta({ label, value }: { label: string; value: string }) {
 
 function Th({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <th className={`px-2.5 py-2 font-black tracking-widest uppercase text-[10px] text-right ${className}`}>
+    <th className={`px-1.5 py-2 font-black tracking-wider uppercase text-[9px] text-right whitespace-nowrap ${className}`}>
       {children}
     </th>
   );
@@ -223,7 +232,7 @@ function Td({
   style?: React.CSSProperties;
 }) {
   return (
-    <td className={`px-2.5 py-2 text-right ${className}`} style={style}>
+    <td className={`px-1.5 py-2 text-right whitespace-nowrap ${className}`} style={style}>
       {children}
     </td>
   );
