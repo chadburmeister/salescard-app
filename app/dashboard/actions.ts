@@ -2,7 +2,7 @@
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { trailingEightQuarters } from "@/lib/quarters";
+
 import { calculateScore, type QuarterInput } from "@/lib/score";
 import { tierFor } from "@/lib/tier";
 import { uniqueUsername } from "@/lib/slug";
@@ -129,7 +129,4 @@ export async function saveKpis(submission: KpiSubmission) {
   redirect("/dashboard");
 }
 
-/** Default 8 trailing quarters for a brand-new rep filling out the form. */
-export function getDefaultQuarterPeriods() {
-  return trailingEightQuarters();
-}
+
