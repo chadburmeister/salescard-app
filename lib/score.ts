@@ -114,7 +114,7 @@ export function calculateScore(
   if (!quarters || quarters.length === 0) {
     return {
       scoreOutOf100: 0,
-      subGradesTenScale: { quota: 0, pipeline: 0, winRate: 0, tenure: 0 },
+      subGradesTenScale: { QUOTA: 0, PIPELINE: 0, WIN_RATE: 0, TENURE: 0 },
     };
   }
 
