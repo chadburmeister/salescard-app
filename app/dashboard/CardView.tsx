@@ -6,6 +6,7 @@ import { tierFor } from "@/lib/tier";
 import type { Card, Quarter, User, SalesRole, VerificationRequest } from "@prisma/client";
 import Link from "next/link";
 import { RequestVerificationDialog } from "./RequestVerificationDialog";
+import { ShareDialog } from "./ShareDialog";
 
 interface Props {
   user: User;
@@ -104,10 +105,16 @@ export function CardView({ user, card }: Props) {
             />
             <Link
               href={`/u/${card.username}`}
-              className="inline-flex items-center gap-2 bg-[#3478C0] hover:bg-[#1E5A9C] text-white font-semibold px-5 py-2.5 rounded-full transition"
+              className="inline-flex items-center gap-2 text-gray-700 hover:bg-gray-100 font-semibold px-5 py-2.5 rounded-full transition"
             >
-              View public card →
+              View public card
             </Link>
+            <ShareDialog
+              repName={name}
+              score={score}
+              tierLabel={tier.label}
+              username={card.username}
+            />
           </div>
         </div>
 
