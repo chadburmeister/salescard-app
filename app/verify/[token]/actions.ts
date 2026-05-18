@@ -152,11 +152,11 @@ async function recalculateScore(cardId: string): Promise<void> {
     verified:             q.verified,
   }));
   const result = calculateScore(role, inputs, card.percentile ?? 50);
-  const tier = tierFor(result.score);
+  const tier = tierFor(result.scoreOutOf100);
   await db.card.update({
     where: { id: cardId },
     data: {
-      score: result.score,
+      score: result.scoreOutOf100,
       tier: tier.label,
     },
   });
