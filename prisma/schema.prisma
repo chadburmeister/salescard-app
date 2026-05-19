@@ -102,6 +102,7 @@ cardBackground  String?
   showRawKpis     Boolean         @default(true)   // show actual $ amounts on public view
   showEmployer    Boolean         @default(true)   // show current employer
   recruiterOptIn  Boolean         @default(false)  // visible in recruiter search
+cardBackground  String?
 
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
