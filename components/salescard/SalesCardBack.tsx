@@ -16,9 +16,9 @@ interface Props {
   role: string;
   score: number;
   company: string;
-  segment: string;
-  region: string;
-  startedQuarter: string;
+  segment: string;        // no longer rendered; kept so callers don't need to change
+  region: string;         // no longer rendered
+  startedQuarter: string; // no longer rendered
   verifiedCount: number;
   totalCount: number;
   quarters: QuarterRow[];
@@ -32,9 +32,6 @@ export function SalesCardBack({
   role,
   score,
   company,
-  segment,
-  region,
-  startedQuarter,
   verifiedCount,
   totalCount,
   quarters,
@@ -65,7 +62,7 @@ export function SalesCardBack({
       </div>
 
       <div className="bg-white px-5 py-4 border-b border-gray-200">
-        <div className="flex items-center justify-between gap-4 flex-wrap mb-2">
+        <div className="flex items-center justify-between gap-4 flex-wrap mb-3">
           <div>
             <div className="text-[10px] font-black tracking-widest text-gray-400 uppercase mb-1">REP</div>
             <div className="font-black text-xl tracking-tight">{name}</div>
@@ -87,11 +84,8 @@ export function SalesCardBack({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-          <Meta label="Company"  value={company} />
-          <Meta label="Segment"  value={segment} />
-          <Meta label="Region"   value={region} />
-          <Meta label="Started"  value={startedQuarter} />
+        <div className="text-xs">
+          <Meta label="Current Company" value={company} />
         </div>
       </div>
 
@@ -110,7 +104,7 @@ export function SalesCardBack({
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200 text-gray-500">
               <Th className="text-left">Qtr</Th>
-              <Th>Target</Th>
+              <Th>Segment</Th>
               <Th>Conv</Th>
               <Th>Mtgs</Th>
               <Th>Opps</Th>
