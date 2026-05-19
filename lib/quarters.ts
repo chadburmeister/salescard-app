@@ -1,62 +1,42 @@
-/**
- * Quarter period helpers.
- * Periods are stored as "Q3 24" style strings.
- * We always think in terms of the trailing 8 quarters.
- */
+// Period descriptors for the KPI form.
+//
+// Returns CY24 (annual rollup of calendar year 2024) plus each completed
+// quarter from Q1 25 onward. "Completed" = today's date is past the end of
+// the quarter (Q1 → Mar 31, Q2 → Jun 30, Q3 → Sep 30, Q4 → Dec 31).
+//
+// New quarters auto-appear as time advances. Q226 will show up starting
+// July 1, 2026.
 
-export interface QuarterRef {
-  period: string;       // "Q3 24"
-  fiscalYear: number;   // 2024
-  fiscalQuarter: number;// 1-4
+export interface QuarterDescriptor {
+  period: string;        // "CY24" | "Q125" | "Q126" etc.
+  fiscalYear: number;
+  fiscalQuarter: number; // 0 = annual rollup, 1-4 = quarters
 }
 
-/** Get the calendar quarter (1-4) and year (e.g. 2026) for a given date. */
-export function currentQuarter(date = new Date()): QuarterRef {
-  const m = date.getUTCMonth(); // 0-11
-  const q = Math.floor(m / 3) + 1;
-  const fullYear = date.getUTCFullYear();
-  return {
-    period: `Q${q} ${String(fullYear).slice(-2)}`,
-    fiscalYear: fullYear,
-    fiscalQuarter: q,
-  };
-}
+export function currentPeriods(): QuarterDescriptor[] {
+  const today = new Date();
+  const periods: QuarterDescriptor[] = [
+    { period: "CY24", fiscalYear: 2024, fiscalQuarter: 0 },
+  ];
 
-/** Returns the previous quarter relative to a given QuarterRef. */
-export function prevQuarter(ref: QuarterRef): QuarterRef {
-  let q = ref.fiscalQuarter - 1;
-  let y = ref.fiscalYear;
-  if (q < 1) {
-    q = 4;
-    y -= 1;
+  for (let year = 2025; year <= today.getFullYear() + 1; year++) {
+    for (let q = 1; q <= 4; q++) {
+      // End-of-quarter date: day 0 of (q*3 + 1) === last day of month q*3
+      const endOfQuarter = new Date(year, q * 3, 0);
+      if (today > endOfQuarter) {
+        periods.push({
+          period: `Q${q}${String(year).slice(2)}`,
+          fiscalYear: year,
+          fiscalQuarter: q,
+        });
+      }
+    }
   }
-  return {
-    period: `Q${q} ${String(y).slice(-2)}`,
-    fiscalYear: y,
-    fiscalQuarter: q,
-  };
+
+  return periods;
 }
 
-/** Returns the trailing 8 quarters (oldest → newest), ending at the quarter *before* `now`
- * (since you can't have stats for the current quarter that hasn't ended yet). */
-export function trailingEightQuarters(now = new Date()): QuarterRef[] {
-  // step back from current to most-recent-completed
-  let cur = prevQuarter(currentQuarter(now));
-  const out: QuarterRef[] = [];
-  for (let i = 0; i < 8; i++) {
-    out.push(cur);
-    cur = prevQuarter(cur);
-  }
-  return out.reverse(); // oldest first
-}
-
-/** Parse a period string back into a QuarterRef. */
-export function parsePeriod(period: string): QuarterRef | null {
-  const m = period.match(/^Q(\d)\s+(\d{2})$/);
-  if (!m) return null;
-  const q = parseInt(m[1], 10);
-  const yy = parseInt(m[2], 10);
-  // assume 2000+ for 00-89, 1900+ for 90-99 (good enough for the next 65 years)
-  const fy = yy < 90 ? 2000 + yy : 1900 + yy;
-  return { period, fiscalYear: fy, fiscalQuarter: q };
+// Kept for backwards-compat with existing imports — same data, new name above.
+export function trailingEightQuarters(): QuarterDescriptor[] {
+  return currentPeriods();
 }
