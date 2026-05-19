@@ -1,21 +1,19 @@
 // SalesCard Score
 //
-// Inputs: 8 quarters of self-reported KPIs (some verified, some not).
-// Output: a 0-100 score, plus four sub-grades on a 0-10 scale for the card front.
+// New formula (sum = 100):
+//   80  Avg quota attainment across all quarters
+//   10  Quota attainment of the most recent quarter
+//   10  Pipe opps per quarter (banded)
 //
-// Weights (sum = 100). Quota attainment is the dominant signal.
-//   Quota %          50
-//   Closed-won $     20
-//   Pipeline $       10
-//   Pipe Opps         5
-//   Activity ratio    5
-//   Peer percentile  10
+// Quota bands (0-10 scale used for both sub-grade and score component):
+//   >=120 = 10, 110-119 = 9, 100-109 = 8, 90-99 = 7,
+//   80-89 = 6,  50-79   = 5, 1-49    = 2, 0 = 0
+//
+// Opps bands:
+//   >24 = 10, 18-24 = 9, 11-17 = 7, <=10 = 5, 0/none = 0
 //
 // Verified quarters carry full weight. Unverified quarters carry half weight.
-//
-// The QUOTA sub-grade and quota-component-of-score use a banded scale:
-//   >=120% → 10 · 110-119% → 9 · 100-109% → 8 · 90-99% → 7
-//   80-89%  →  6 · 50-79%   → 5 · 1-49%     → 2 · 0/none → 0
+// The `quarters` array is expected oldest → newest (the dashboard already sorts).
 
 import type { SalesRole } from "@prisma/client";
 
@@ -47,29 +45,28 @@ export interface ScoreResult {
   subGradesTenScale: SubGradesTen;
 }
 
-const W_QUOTA      = 50;
-const W_CLOSED_WON = 20;
-const W_PIPELINE   = 10;
-const W_PIPE_OPPS  = 5;
-const W_ACTIVITY   = 5;
-const W_PERCENTILE = 10;
+const W_AVG_QUOTA    = 80;
+const W_LATEST_QUOTA = 10;
+const W_OPPS         = 10;
 
-function anchors(role: SalesRole | null | undefined) {
-  if (role === "SDR" || role === "BDR") {
-    return { closedWon: 200_000, pipeline: 500_000, pipeOpps: 60 };
-  }
-  return { closedWon: 1_000_000, pipeline: 3_000_000, pipeOpps: 30 };
+function quotaBand(pct: number): number {
+  if (!Number.isFinite(pct) || pct <= 0) return 0;
+  if (pct >= 120) return 10;
+  if (pct >= 110) return 9;
+  if (pct >= 100) return 8;
+  if (pct >= 90)  return 7;
+  if (pct >= 80)  return 6;
+  if (pct >= 50)  return 5;
+  if (pct >= 1)   return 2;
+  return 0;
 }
 
-function rangeMidpoint(range: string | null | undefined): number | null {
-  if (!range) return null;
-  const r = range.trim();
-  if (r === "<50") return 25;
-  if (r === "50-100") return 75;
-  if (r === "100-250") return 175;
-  if (r === "250+") return 350;
-  const n = parseFloat(r);
-  return Number.isFinite(n) ? n : null;
+function oppsBand(avgOpps: number): number {
+  if (!Number.isFinite(avgOpps) || avgOpps <= 0) return 0;
+  if (avgOpps > 24)  return 10;
+  if (avgOpps >= 18) return 9;
+  if (avgOpps >= 11) return 7;
+  return 5;
 }
 
 function wAvg(quarters: QuarterInput[], pick: (q: QuarterInput) => number | null): number {
@@ -85,34 +82,13 @@ function wAvg(quarters: QuarterInput[], pick: (q: QuarterInput) => number | null
   return w > 0 ? sum / w : 0;
 }
 
-/**
- * Banded quota score on a 0-10 scale.
- *   >=120% → 10
- *   110-119.99% → 9
- *   100-109.99% → 8
- *   90-99.99% → 7
- *   80-89.99% → 6
- *   50-79.99% → 5
- *   1-49.99% → 2
- *   0 / none → 0
- */
-function quotaBand(avgQuotaPct: number): number {
-  if (!Number.isFinite(avgQuotaPct) || avgQuotaPct <= 0) return 0;
-  if (avgQuotaPct >= 120) return 10;
-  if (avgQuotaPct >= 110) return 9;
-  if (avgQuotaPct >= 100) return 8;
-  if (avgQuotaPct >= 90)  return 7;
-  if (avgQuotaPct >= 80)  return 6;
-  if (avgQuotaPct >= 50)  return 5;
-  if (avgQuotaPct >= 1)   return 2;
-  return 0;
-}
-
 export function calculateScore(
-  role: SalesRole | string | null | undefined,
+  _role: SalesRole | string | null | undefined,
   quarters: QuarterInput[],
-  percentile: number
+  _percentile: number
 ): ScoreResult {
+  void _role;
+  void _percentile;
   if (!quarters || quarters.length === 0) {
     return {
       scoreOutOf100: 0,
@@ -120,65 +96,40 @@ export function calculateScore(
     };
   }
 
-  const r = (role as SalesRole) ?? "AE";
-  const a = anchors(r);
+  // ──── 1. Avg quota (80) ────
+  const avgQuotaPct = wAvg(quarters, (q) => q.quotaAttainmentPct);
+  const avgQuotaTen = quotaBand(avgQuotaPct);
+  const avgQuotaScore = avgQuotaTen * 10;
 
-  // ──── Quota (banded) ────
-  const avgQuotaPct = wAvg(quarters, q => q.quotaAttainmentPct);
-  const quotaTen = quotaBand(avgQuotaPct);
-  const quotaScore = quotaTen * 10; // 0-100 contribution
+  // ──── 2. Latest-quarter quota (10) ────
+  const latestQ = quarters[quarters.length - 1];
+  const latestQuotaPct = latestQ?.quotaAttainmentPct ?? 0;
+  const latestQuotaTen = quotaBand(latestQuotaPct);
+  const latestQuotaScore = latestQuotaTen * 10;
 
-  // ──── Closed-won $ ────
-  const wonScore = clamp(
-    wAvg(quarters, q => q.closedWonDollars != null ? (q.closedWonDollars / a.closedWon) * 100 : null),
-    0, 100
-  );
+  // ──── 3. Opps banded (10) ────
+  const avgOpps = wAvg(quarters, (q) => (q.pipeOpps != null ? q.pipeOpps : null));
+  const oppsTen = oppsBand(avgOpps);
+  const oppsScore = oppsTen * 10;
 
-  // ──── Pipeline $ ────
-  const pipeScore = clamp(
-    wAvg(quarters, q => q.pipelineDollars != null ? (q.pipelineDollars / a.pipeline) * 100 : null),
-    0, 100
-  );
-
-  // ──── Pipe opps count ────
-  const oppsScore = clamp(
-    wAvg(quarters, q => q.pipeOpps != null ? (q.pipeOpps / a.pipeOpps) * 100 : null),
-    0, 100
-  );
-
-  // ──── Activity ratio: pipe opps ÷ meetings; 30% → 100 points ────
-  const activityScore = clamp(
-    wAvg(quarters, q => {
-      const meetings = rangeMidpoint(q.meetingsRange);
-      const opps = q.pipeOpps;
-      if (!meetings || meetings <= 0 || opps == null) return null;
-      const ratio = (opps / meetings) * 100;
-      return Math.min(100, (ratio / 30) * 100);
-    }),
-    0, 100
-  );
-
-  // ──── Peer percentile placeholder ────
-  const percentileScore = clamp(Number.isFinite(percentile) ? percentile : 50, 0, 100);
-
-  // Weighted total
   const weighted =
-    quotaScore      * W_QUOTA +
-    wonScore        * W_CLOSED_WON +
-    pipeScore       * W_PIPELINE +
-    oppsScore       * W_PIPE_OPPS +
-    activityScore   * W_ACTIVITY +
-    percentileScore * W_PERCENTILE;
+    avgQuotaScore    * W_AVG_QUOTA +
+    latestQuotaScore * W_LATEST_QUOTA +
+    oppsScore        * W_OPPS;
 
   const scoreOutOf100 = Math.round(clamp(weighted / 100, 0, 100));
 
   const tenure = Math.min(10, quarters.length * 1.25);
+  // Note: PIPELINE & WIN_RATE sub-grades on the card front are now decorative;
+  // they no longer factor into the overall score. PIPELINE shows the opps band
+  // (since opps is the only non-quota signal in the new formula), and WIN_RATE
+  // shows the latest-quarter quota band (proxy for recency).
   return {
     scoreOutOf100,
     subGradesTenScale: {
-      QUOTA:    quotaTen,
-      PIPELINE: Math.round(pipeScore / 10),
-      WIN_RATE: Math.round(activityScore / 10),
+      QUOTA:    avgQuotaTen,
+      PIPELINE: oppsTen,
+      WIN_RATE: latestQuotaTen,
       TENURE:   Math.round(tenure),
     },
   };
