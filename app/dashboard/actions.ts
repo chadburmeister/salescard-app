@@ -55,6 +55,7 @@ export async function saveKpis(submission: KpiSubmission) {
       });
     }
 
+    // Upsert each submitted period
     for (const q of submission.quarters) {
       const pipelineBig  = q.pipelineDollars   != null ? BigInt(Math.round(q.pipelineDollars))   : null;
       const closedWonBig = q.closedWonDollars  != null ? BigInt(Math.round(q.closedWonDollars))  : null;
@@ -82,6 +83,18 @@ export async function saveKpis(submission: KpiSubmission) {
           pipelineDollars: pipelineBig,
           closedWonDollars: closedWonBig,
           quotaAttainmentPct: q.quotaAttainmentPct,
+        },
+      });
+    }
+
+    // Cleanup: remove any quarters on this card whose period isn't in the
+    // submitted list (sweeps old periods like "Q3 24" out of the DB).
+    const submittedPeriods = submission.quarters.map(q => q.period);
+    if (submittedPeriods.length > 0) {
+      await db.quarter.deleteMany({
+        where: {
+          cardId: card.id,
+          period: { notIn: submittedPeriods },
         },
       });
     }
