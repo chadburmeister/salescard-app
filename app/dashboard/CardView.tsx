@@ -9,6 +9,7 @@ import { RequestVerificationDialog } from "./RequestVerificationDialog";
 import { ShareDialog } from "./ShareDialog";
 import { PhotoUploadDialog } from "./PhotoUploadDialog";
 import { CardThemeDialog } from "./CardThemeDialog";
+import { EditCompanyDialog } from "./EditCompanyDialog";
 
 interface Props {
   user: User;
@@ -185,6 +186,9 @@ export function CardView({ user, card }: Props) {
               scoutReport={scoutReport}
               percentileText={`TOP ${100 - (card.percentile ?? 50)}% ${roleLabel(role).toUpperCase()}`}
             />
+            <div className="mt-4 flex justify-center">
+              <EditCompanyDialog currentCompany={user.currentCompany ?? null} />
+            </div>
           </div>
         </div>
       </div>
