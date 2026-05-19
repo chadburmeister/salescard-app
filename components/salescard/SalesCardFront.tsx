@@ -9,7 +9,6 @@ export interface SalesCardFrontProps {
   score: number;
   linkedinHandle?: string;
   photoUrl?: string;
-  /** Theme id (e.g. "midnight") or custom image URL. Defaults to "stadium". */
   themeId?: string | null;
   subGrades?: { PIPELINE: number; WIN_RATE: number; QUOTA: number; TENURE: number };
   certNo?: string;
@@ -36,7 +35,6 @@ export function SalesCardFront({
   const clipId = `photoClip-${handle}`;
   const bgImageId = `bgImage-${handle}`;
 
-  // Resolve the chosen theme (or default to Stadium).
   const { theme, customImageUrl } = resolveCardBackground(themeId);
   const photoZoneBg = theme?.photoBg ?? "#F5F7FB";
   const photoZoneAccent = theme?.accent ?? tierColor;
@@ -90,19 +88,19 @@ export function SalesCardFront({
       <text x="324" y="84" fontFamily="Inter, system-ui, sans-serif" fontSize="38" fontWeight="900" fill={tierTextOnBar} textAnchor="middle">
         {score}
       </text>
-      <text x="324" y="110" fontFamily="Inter, system-ui, sans-serif" fontSize="11" fontWeight="900" fill={tierTextOnBar} textAnchor="middle" letterSpacing="0.8">
+      <text x="324" y="116" fontFamily="Inter, system-ui, sans-serif" fontSize="9" fontWeight="900" fill={tierTextOnBar} textAnchor="middle" textLength="68" lengthAdjust="spacingAndGlyphs">
         {tier.name.toUpperCase()}
       </text>
 
       <rect x="370" y="34" width="60" height="102" fill="#F5B739" />
-      <text x="400" y="56" fontFamily="Inter, system-ui, sans-serif" fontSize="9" fontWeight="900" fill="#0F0F0F" textAnchor="middle" letterSpacing="0.6">
+      <text x="400" y="58" fontFamily="Inter, system-ui, sans-serif" fontSize="9" fontWeight="900" fill="#0F0F0F" textAnchor="middle" letterSpacing="0.6">
         VERIFIED
       </text>
-      <text x="400" y="94" fontFamily="Inter, system-ui, sans-serif" fontSize="28" fontWeight="900" fill="#0F0F0F" textAnchor="middle">
+      <text x="400" y="104" fontFamily="Inter, system-ui, sans-serif" fontSize="32" fontWeight="900" fill="#0F0F0F" textAnchor="middle">
         10
       </text>
-      <text x="400" y="120" fontFamily="Inter, system-ui, sans-serif" fontSize="7" fontWeight="900" fill="#0F0F0F" textAnchor="middle" letterSpacing="0.5">
-        AUTOGRAPH
+      <text x="400" y="126" fontFamily="Inter, system-ui, sans-serif" fontSize="7" fontWeight="900" fill="#0F0F0F" textAnchor="middle" letterSpacing="0.4">
+        GRADE
       </text>
 
       <text x="30" y="184" fontFamily="Inter, system-ui, sans-serif" fontSize="22" fontWeight="900">
@@ -113,15 +111,6 @@ export function SalesCardFront({
         CHROME · VERIFIED
       </text>
 
-      <circle cx="408" cy="190" r="26" fill={tierColor} stroke="#0F0F0F" strokeWidth="2" />
-      <text x="408" y="184" fontFamily="Inter, system-ui, sans-serif" fontSize="10" fontWeight="900" fill="#0F0F0F" textAnchor="middle">
-        VER
-      </text>
-      <text x="408" y="200" fontFamily="Inter, system-ui, sans-serif" fontSize="13" fontWeight="900" fill="#0F0F0F" textAnchor="middle">
-        {score}
-      </text>
-
-      {/* ====== Photo zone — themed background + circular avatar ====== */}
       <rect x="30" y="220" width="400" height="290" fill={customImageUrl ? `url(#${bgImageId})` : photoZoneBg} />
       {!customImageUrl ? (
         <>
