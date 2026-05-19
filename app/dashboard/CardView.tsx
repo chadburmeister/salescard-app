@@ -8,6 +8,7 @@ import Link from "next/link";
 import { RequestVerificationDialog } from "./RequestVerificationDialog";
 import { ShareDialog } from "./ShareDialog";
 import { PhotoUploadDialog } from "./PhotoUploadDialog";
+import { CardThemeDialog } from "./CardThemeDialog";
 
 interface Props {
   user: User;
@@ -154,15 +155,17 @@ export function CardView({ user, card }: Props) {
               score={score}
               photoUrl={user.image ?? undefined}
               linkedinHandle={linkedinHandleFor(user)}
+              themeId={card.cardBackground}
               subGrades={computed.subGradesTenScale}
             />
-          <div className="mt-4 flex justify-center">
+            <div className="mt-4 flex justify-center gap-2 flex-wrap">
               <PhotoUploadDialog
                 currentImage={user.image ?? null}
                 userName={name}
                 variant="button"
                 buttonLabel="Change my card photo"
               />
+              <CardThemeDialog currentTheme={card.cardBackground} />
             </div>
           </div>
           <div>
