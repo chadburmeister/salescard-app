@@ -155,6 +155,30 @@ export async function setCardBackground(themeIdOrUrl: string | null) {
 }
 
 // ===========================================================================
+// SET CURRENT COMPANY
+// ===========================================================================
+
+export async function setCurrentCompany(company: string | null) {
+  const session = await auth();
+  if (!session?.user?.id) return { ok: false as const, error: "Not signed in." };
+
+  const clean = (company || "").trim().slice(0, 200) || null;
+
+  await db.user.update({
+    where: { id: session.user.id },
+    data: { currentCompany: clean },
+  });
+
+  const user = await db.user.findUnique({
+    where: { id: session.user.id },
+    include: { card: true },
+  });
+  revalidatePath("/dashboard");
+  if (user?.card) revalidatePath(`/u/${user.card.username}`);
+  return { ok: true as const };
+}
+
+// ===========================================================================
 // VERIFICATION REQUEST
 // ===========================================================================
 
