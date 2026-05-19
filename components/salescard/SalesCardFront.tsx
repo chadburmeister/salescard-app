@@ -1,6 +1,7 @@
 "use client";
 
 import { tierFor } from "@/lib/tier";
+import { resolveCardBackground } from "@/lib/cardThemes";
 
 export interface SalesCardFrontProps {
   name: string;
@@ -8,6 +9,8 @@ export interface SalesCardFrontProps {
   score: number;
   linkedinHandle?: string;
   photoUrl?: string;
+  /** Theme id (e.g. "midnight") or custom image URL. Defaults to "stadium". */
+  themeId?: string | null;
   subGrades?: { PIPELINE: number; WIN_RATE: number; QUOTA: number; TENURE: number };
   certNo?: string;
   className?: string;
@@ -19,6 +22,7 @@ export function SalesCardFront({
   score,
   linkedinHandle,
   photoUrl,
+  themeId,
   subGrades = { PIPELINE: 9.4, WIN_RATE: 9.0, QUOTA: 9.6, TENURE: 8.8 },
   certNo,
   className,
@@ -30,6 +34,12 @@ export function SalesCardFront({
   const handle = (linkedinHandle ?? slug(name)).replace(/^@/, "");
   const linkedinUrl = `https://www.linkedin.com/in/${handle}`;
   const clipId = `photoClip-${handle}`;
+  const bgImageId = `bgImage-${handle}`;
+
+  // Resolve the chosen theme (or default to Stadium).
+  const { theme, customImageUrl } = resolveCardBackground(themeId);
+  const photoZoneBg = theme?.photoBg ?? "#F5F7FB";
+  const photoZoneAccent = theme?.accent ?? tierColor;
 
   return (
     <svg
@@ -43,6 +53,11 @@ export function SalesCardFront({
         <clipPath id={clipId}>
           <circle cx="230" cy="365" r="104" />
         </clipPath>
+        {customImageUrl ? (
+          <pattern id={bgImageId} patternUnits="userSpaceOnUse" x="30" y="220" width="400" height="290">
+            <image href={customImageUrl} x="0" y="0" width="400" height="290" preserveAspectRatio="xMidYMid slice" />
+          </pattern>
+        ) : null}
       </defs>
 
       <rect x="0" y="0" width="460" height="640" rx="18" fill="#DDDCD3" stroke="#B8B6AC" strokeWidth="2" />
@@ -106,15 +121,16 @@ export function SalesCardFront({
         {score}
       </text>
 
-      {/* ====== Photo zone — circular avatar with tier ring ====== */}
-      <rect x="30" y="220" width="400" height="290" fill="#F5F7FB" />
-      {/* Decorative faint stripes */}
-      <rect x="30" y="220" width="400" height="3" fill={tierColor} opacity="0.35" />
-      <rect x="30" y="507" width="400" height="3" fill={tierColor} opacity="0.35" />
+      {/* ====== Photo zone — themed background + circular avatar ====== */}
+      <rect x="30" y="220" width="400" height="290" fill={customImageUrl ? `url(#${bgImageId})` : photoZoneBg} />
+      {!customImageUrl ? (
+        <>
+          <rect x="30" y="220" width="400" height="3" fill={photoZoneAccent} opacity="0.35" />
+          <rect x="30" y="507" width="400" height="3" fill={photoZoneAccent} opacity="0.35" />
+        </>
+      ) : null}
 
-      {/* Tier-colored outer ring */}
       <circle cx="230" cy="365" r="112" fill={tierColor} />
-      {/* White gap */}
       <circle cx="230" cy="365" r="106" fill="#FFFFFF" />
 
       {photoUrl ? (
@@ -129,14 +145,12 @@ export function SalesCardFront({
         />
       ) : (
         <>
-          {/* Fallback silhouette inside the circle */}
           <circle cx="230" cy="365" r="104" fill="#E5E7EB" />
           <circle cx="230" cy="338" r="32" fill="#9CA3AF" />
           <path d="M 162 460 C 162 412, 196 388, 230 388 C 264 388, 298 412, 298 460 Z" fill="#9CA3AF" />
         </>
       )}
 
-      {/* LinkedIn — clickable */}
       <a href={linkedinUrl} target="_blank" rel="noopener noreferrer">
         <g transform="translate(30, 522)">
           <rect width="20" height="20" rx="3" fill="#0A66C2" />
@@ -144,16 +158,7 @@ export function SalesCardFront({
             in
           </text>
         </g>
-        <text
-          x="60"
-          y="538"
-          fontFamily="Inter, system-ui, sans-serif"
-          fontSize="14"
-          fontWeight="600"
-          fill="#1F2937"
-          fontStyle="italic"
-          style={{ textDecoration: "underline" }}
-        >
+        <text x="60" y="538" fontFamily="Inter, system-ui, sans-serif" fontSize="14" fontWeight="600" fill="#1F2937" fontStyle="italic" style={{ textDecoration: "underline" }}>
           linkedin.com/in/{handle}
         </text>
       </a>
