@@ -34,6 +34,7 @@ export function SalesCardFront({
   const linkedinUrl = `https://www.linkedin.com/in/${handle}`;
   const clipId = `photoClip-${handle}`;
   const bgImageId = `bgImage-${handle}`;
+  const currentYear = new Date().getFullYear();
 
   const { theme, customImageUrl } = resolveCardBackground(themeId);
   const photoZoneBg = theme?.photoBg ?? "#F5F7FB";
@@ -64,7 +65,7 @@ export function SalesCardFront({
       <rect x="14" y="23" width="432" height="124" fill="#0F0F0F" />
 
       <text x="30" y="44" fontFamily="Inter, system-ui, sans-serif" fontSize="11" fontWeight="700" fill="#F5B739" letterSpacing="0.5">
-        2024 SALESCARD VERIFIED · SERIES 1
+        {currentYear} SALESCARD VERIFIED · SERIES 1
       </text>
       <text x="30" y="66" fontFamily="Inter, system-ui, sans-serif" fontSize="15" fontWeight="900" fill="#FFFFFF">
         #SC {name.toUpperCase()}
