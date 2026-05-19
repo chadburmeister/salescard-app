@@ -5,13 +5,6 @@ import { useRouter } from "next/navigation";
 import type { SalesRole } from "@prisma/client";
 import { saveKpis } from "./actions";
 
-// ===========================================================================
-// KpiForm — 8 quarters of inputs with the new column set.
-// Columns (one card per quarter):
-//   Target · Conversations · Meetings · Pipe Opps · Pipe $ · Closed/Won $ · % of Quota
-// AGT and AGT $ are gone.
-// ===========================================================================
-
 const TARGET_OPTIONS = ["SMB", "Mid-Market", "Enterprise", "PubSec", "Other"] as const;
 const RANGE_OPTIONS  = ["<50", "50-100", "100-250", "250+"] as const;
 
@@ -31,7 +24,7 @@ interface QuarterFormState {
   targetSegment:      TargetOpt;
   conversationsRange: RangeOpt;
   meetingsRange:      RangeOpt;
-  pipeOpps:           string;  // numeric string for controlled input
+  pipeOpps:           string;
   pipelineDollars:    string;
   closedWonDollars:   string;
   quotaAttainmentPct: string;
@@ -40,7 +33,6 @@ interface QuarterFormState {
 interface Props {
   quarters: QuarterDescriptor[];
   initialRole: SalesRole;
-  /** Optional pre-populated values for editing an existing card. */
   initialData?: Partial<QuarterFormState>[];
 }
 
@@ -127,107 +119,124 @@ export function KpiForm({ quarters, initialRole, initialData }: Props) {
         </div>
       </div>
 
-      {/* Quarter rows */}
-      <div className="space-y-4">
-        {rows.map((row, i) => (
-          <div key={row.period} className="bg-white border border-gray-200 rounded-2xl p-5">
-            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-[#0F0F0F] text-[#F5B739] flex items-center justify-center font-black text-sm">
-                  {row.fiscalQuarter}
-                </div>
-                <div>
-                  <div className="text-lg font-black tracking-tight">{row.period}</div>
-                  <div className="text-xs text-gray-500">Quarter {i + 1} of {rows.length}</div>
-                </div>
-              </div>
-              <div className="text-xs text-gray-500">Leave blank if you don&apos;t have the number.</div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Field label="Target segment">
-                <select
-                  value={row.targetSegment}
-                  onChange={e => update(i, { targetSegment: e.target.value as TargetOpt })}
-                  className="form-select"
-                >
-                  <option value="">—</option>
-                  {TARGET_OPTIONS.map(o => (
-                    <option key={o} value={o}>{o}</option>
-                  ))}
-                </select>
-              </Field>
-
-              <Field label="Conversations / qtr">
-                <select
-                  value={row.conversationsRange}
-                  onChange={e => update(i, { conversationsRange: e.target.value as RangeOpt })}
-                  className="form-select"
-                >
-                  <option value="">—</option>
-                  {RANGE_OPTIONS.map(o => (
-                    <option key={o} value={o}>{o}</option>
-                  ))}
-                </select>
-              </Field>
-
-              <Field label="Meetings / qtr">
-                <select
-                  value={row.meetingsRange}
-                  onChange={e => update(i, { meetingsRange: e.target.value as RangeOpt })}
-                  className="form-select"
-                >
-                  <option value="">—</option>
-                  {RANGE_OPTIONS.map(o => (
-                    <option key={o} value={o}>{o}</option>
-                  ))}
-                </select>
-              </Field>
-
-              <Field label="Pipe opps">
-                <input
-                  type="number"
-                  min={0}
-                  inputMode="numeric"
-                  value={row.pipeOpps}
-                  onChange={e => update(i, { pipeOpps: e.target.value })}
-                  placeholder="0"
-                  className="form-input"
-                />
-              </Field>
-
-              <Field label="Pipe $">
-                <CurrencyInput
-                  value={row.pipelineDollars}
-                  onChange={(v) => update(i, { pipelineDollars: v })}
-                />
-              </Field>
-
-              <Field label="Closed/Won $">
-                <CurrencyInput
-                  value={row.closedWonDollars}
-                  onChange={(v) => update(i, { closedWonDollars: v })}
-                />
-              </Field>
-
-              <Field label="% of Quota">
-                <div className="relative">
-                  <input
-                    type="number"
-                    min={0}
-                    step="1"
-                    inputMode="numeric"
-                    value={row.quotaAttainmentPct}
-                    onChange={e => update(i, { quotaAttainmentPct: e.target.value })}
-                    placeholder="100"
-                    className="form-input pr-8"
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">%</span>
-                </div>
-              </Field>
-            </div>
+      {/* Stats table */}
+      <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <div className="text-xs font-black tracking-widest text-[#3478C0] uppercase mb-0.5">Your stats</div>
+            <div className="text-sm text-gray-600">Click any cell to edit. Leave blank if you don&apos;t have the number.</div>
           </div>
-        ))}
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm" style={{ minWidth: 880 }}>
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr className="text-[11px] tracking-wider uppercase text-gray-500">
+                <th className="px-3 py-3 text-left font-black">Period</th>
+                <th className="px-2 py-3 text-left font-black">Segment</th>
+                <th className="px-2 py-3 text-left font-black">Conv / Qtr</th>
+                <th className="px-2 py-3 text-left font-black">Mtgs / Qtr</th>
+                <th className="px-2 py-3 text-left font-black">Pipe Opps</th>
+                <th className="px-2 py-3 text-left font-black">Pipe $</th>
+                <th className="px-2 py-3 text-left font-black">Closed/Won $</th>
+                <th className="px-2 py-3 text-left font-black">% of Quota</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, i) => (
+                <tr key={row.period} className={`border-b border-gray-100 last:border-b-0 ${i % 2 === 1 ? "bg-gray-50/40" : ""}`}>
+                  <td className="px-3 py-2 font-black text-gray-900 whitespace-nowrap">{row.period}</td>
+                  <td className="px-1.5 py-1">
+                    <select
+                      value={row.targetSegment}
+                      onChange={(e) => update(i, { targetSegment: e.target.value as TargetOpt })}
+                      className="cell-select"
+                    >
+                      <option value="">—</option>
+                      {TARGET_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                  </td>
+                  <td className="px-1.5 py-1">
+                    <select
+                      value={row.conversationsRange}
+                      onChange={(e) => update(i, { conversationsRange: e.target.value as RangeOpt })}
+                      className="cell-select"
+                    >
+                      <option value="">—</option>
+                      {RANGE_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                  </td>
+                  <td className="px-1.5 py-1">
+                    <select
+                      value={row.meetingsRange}
+                      onChange={(e) => update(i, { meetingsRange: e.target.value as RangeOpt })}
+                      className="cell-select"
+                    >
+                      <option value="">—</option>
+                      {RANGE_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                  </td>
+                  <td className="px-1.5 py-1">
+                    <input
+                      type="number"
+                      min={0}
+                      inputMode="numeric"
+                      value={row.pipeOpps}
+                      onChange={(e) => update(i, { pipeOpps: e.target.value })}
+                      placeholder="—"
+                      className="cell-input"
+                    />
+                  </td>
+                  <td className="px-1.5 py-1">
+                    <div className="relative">
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none">$</span>
+                      <input
+                        type="number"
+                        min={0}
+                        inputMode="numeric"
+                        value={row.pipelineDollars}
+                        onChange={(e) => update(i, { pipelineDollars: e.target.value })}
+                        placeholder="—"
+                        className="cell-input"
+                        style={{ paddingLeft: 18 }}
+                      />
+                    </div>
+                  </td>
+                  <td className="px-1.5 py-1">
+                    <div className="relative">
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none">$</span>
+                      <input
+                        type="number"
+                        min={0}
+                        inputMode="numeric"
+                        value={row.closedWonDollars}
+                        onChange={(e) => update(i, { closedWonDollars: e.target.value })}
+                        placeholder="—"
+                        className="cell-input"
+                        style={{ paddingLeft: 18 }}
+                      />
+                    </div>
+                  </td>
+                  <td className="px-1.5 py-1">
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min={0}
+                        inputMode="numeric"
+                        value={row.quotaAttainmentPct}
+                        onChange={(e) => update(i, { quotaAttainmentPct: e.target.value })}
+                        placeholder="—"
+                        className="cell-input"
+                        style={{ paddingRight: 18 }}
+                      />
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none">%</span>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {error && (
@@ -247,71 +256,39 @@ export function KpiForm({ quarters, initialRole, initialData }: Props) {
       </div>
 
       <style jsx>{`
-        :global(.form-input),
-        :global(.form-select) {
+        :global(.cell-input),
+        :global(.cell-select) {
           width: 100%;
-          padding: 10px 12px;
-          border: 1.5px solid #e5e7eb;
-          border-radius: 10px;
-          font-size: 14px;
-          background: white;
+          padding: 6px 8px;
+          border: 1px solid transparent;
+          border-radius: 6px;
+          font-size: 13px;
+          background: transparent;
           color: #111827;
-          transition: border-color .12s ease;
           font-family: inherit;
+          transition: border-color .1s ease, background .1s ease, box-shadow .1s ease;
         }
-        :global(.form-input):focus,
-        :global(.form-select):focus {
+        :global(.cell-input):hover,
+        :global(.cell-select):hover {
+          border-color: #e5e7eb;
+        }
+        :global(.cell-input):focus,
+        :global(.cell-select):focus {
           outline: none;
           border-color: #3478c0;
+          background: white;
+          box-shadow: 0 0 0 2px rgba(52, 120, 192, 0.12);
         }
-        :global(.form-select) {
+        :global(.cell-select) {
           appearance: none;
           background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
           background-repeat: no-repeat;
-          background-position: right 10px center;
-          background-size: 14px;
-          padding-right: 32px;
+          background-position: right 4px center;
+          background-size: 11px;
+          padding-right: 20px;
         }
       `}</style>
     </form>
-  );
-}
-
-// ---------- helpers ----------
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <div className="text-[11px] font-black tracking-widest text-gray-500 uppercase mb-1.5">
-        {label}
-      </div>
-      {children}
-    </label>
-  );
-}
-
-function CurrencyInput({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <div className="relative">
-      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm pointer-events-none">$</span>
-      <input
-        type="number"
-        min={0}
-        step="1"
-        inputMode="numeric"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="0"
-        className="form-input"
-        style={{ paddingLeft: "28px" }}
-      />
-    </div>
   );
 }
 
