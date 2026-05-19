@@ -128,6 +128,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
               score={score}
               photoUrl={user.image ?? undefined}
               linkedinHandle={linkedinHandleFor(user)}
+              themeId={card.cardBackground}
               subGrades={computed.subGradesTenScale}
             />
           </div>
