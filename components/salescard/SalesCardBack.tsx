@@ -16,9 +16,9 @@ interface Props {
   role: string;
   score: number;
   company: string;
-  segment: string;        // no longer rendered; kept so callers don't need to change
-  region: string;         // no longer rendered
-  startedQuarter: string; // no longer rendered
+  segment: string;        // unused (kept for caller compat)
+  region: string;         // unused
+  startedQuarter: string; // unused
   verifiedCount: number;
   totalCount: number;
   quarters: QuarterRow[];
@@ -45,65 +45,68 @@ export function SalesCardBack({
 
   return (
     <div
-      className="rounded-2xl overflow-hidden shadow-xl border border-gray-200 bg-[#F5F5EE]"
-      style={{ fontFeatureSettings: "'tnum' 1" }}
+      className="rounded-2xl overflow-hidden shadow-xl border border-gray-200 bg-[#F5F5EE] flex flex-col"
+      style={{ aspectRatio: "460 / 640", fontFeatureSettings: "'tnum' 1" }}
     >
-      <div className="relative bg-[#0F0F0F] text-white">
-        <div className="h-2" style={{ background: tierBg }} />
-        <div className="px-5 py-4 flex items-center justify-between gap-3">
-          <div className="text-[11px] font-black tracking-[0.25em] text-[#F5B739]">
+      {/* Header strip */}
+      <div className="relative bg-[#0F0F0F] text-white flex-shrink-0">
+        <div className="h-1.5" style={{ background: tierBg }} />
+        <div className="px-4 py-2.5 flex items-center justify-between gap-3">
+          <div className="text-[10px] font-black tracking-[0.25em] text-[#F5B739]">
             VERIFIED · SERIES 1
           </div>
-          <div className="font-black text-lg tracking-tight">
+          <div className="font-black text-base tracking-tight">
             <span style={{ color: "#5294E0" }}>Sales</span>
             <span style={{ color: "#10B981" }}>Card</span>
           </div>
         </div>
       </div>
 
-      <div className="bg-white px-5 py-4 border-b border-gray-200">
-        <div className="flex items-center justify-between gap-4 flex-wrap mb-3">
-          <div>
-            <div className="text-[10px] font-black tracking-widest text-gray-400 uppercase mb-1">REP</div>
-            <div className="font-black text-xl tracking-tight">{name}</div>
-            <div className="text-sm text-gray-600 font-semibold">{role}</div>
+      {/* Identity row */}
+      <div className="bg-white px-4 py-3 border-b border-gray-200 flex-shrink-0">
+        <div className="flex items-center justify-between gap-3 flex-wrap mb-2">
+          <div className="min-w-0 flex-1">
+            <div className="text-[9px] font-black tracking-widest text-gray-400 uppercase">REP</div>
+            <div className="font-black text-base tracking-tight leading-tight truncate">{name}</div>
+            <div className="text-[11px] text-gray-600 font-semibold">{role}</div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <div
-              className="w-12 h-12 rounded-lg flex items-center justify-center font-black text-2xl"
+              className="w-10 h-10 rounded-lg flex items-center justify-center font-black text-xl"
               style={{ background: tierBg, color: tierText }}
             >
               {score}
             </div>
             <div className="text-right">
-              <div className="text-[10px] font-black tracking-widest text-gray-400 uppercase">Tier</div>
-              <div className="text-xs font-black uppercase tracking-wider" style={{ color: tierBg }}>
+              <div className="text-[9px] font-black tracking-widest text-gray-400 uppercase">Tier</div>
+              <div className="text-[10px] font-black uppercase tracking-wider" style={{ color: tierBg }}>
                 {tier.name}
               </div>
             </div>
           </div>
         </div>
 
-        <div className="text-xs">
+        <div>
           <Meta label="Current Company" value={company} />
         </div>
       </div>
 
-      <div className="bg-white">
-        <table className="w-full text-[11px] tabular-nums table-fixed">
+      {/* Quarter table — flexes to fill */}
+      <div className="bg-white flex-1 min-h-0 overflow-hidden">
+        <table className="w-full text-[11px] tabular-nums table-fixed h-full">
           <colgroup>
             <col style={{ width: "11%" }} />
             <col style={{ width: "13%" }} />
-            <col style={{ width: "13%" }} />
-            <col style={{ width: "13%" }} />
+            <col style={{ width: "12%" }} />
+            <col style={{ width: "12%" }} />
             <col style={{ width: "9%" }} />
-            <col style={{ width: "14%" }} />
             <col style={{ width: "15%" }} />
+            <col style={{ width: "16%" }} />
             <col style={{ width: "12%" }} />
           </colgroup>
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200 text-gray-500">
-              <Th className="text-left">Qtr</Th>
+              <Th className="text-left">Period</Th>
               <Th>Segment</Th>
               <Th>Conv</Th>
               <Th>Mtgs</Th>
@@ -140,34 +143,39 @@ export function SalesCardBack({
         </table>
       </div>
 
-      <div className="bg-white px-5 py-3 border-t border-b border-gray-200 flex items-center justify-between flex-wrap gap-2 text-xs">
-        <div className="flex items-center gap-2 text-emerald-700 font-bold">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+      {/* Verification + percentile strip */}
+      <div className="bg-white px-4 py-2 border-t border-gray-200 flex items-center justify-between flex-wrap gap-2 text-[11px] flex-shrink-0">
+        <div className="flex items-center gap-1.5 text-emerald-700 font-bold">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="20 6 9 17 4 12" />
           </svg>
-          {verifiedCount} of {totalCount} quarters verified
+          {verifiedCount} of {totalCount} verified
         </div>
         {percentileText ? (
-          <div className="font-black tracking-widest text-[#3478C0] text-[11px]">
+          <div className="font-black tracking-widest text-[#3478C0] text-[10px]">
             {percentileText}
           </div>
         ) : null}
       </div>
 
+      {/* Scout report */}
       {scoutReport ? (
-        <div className="bg-[#F5F5EE] px-5 py-4">
-          <div className="text-[10px] font-black tracking-widest text-gray-500 uppercase mb-1.5">Scout Report</div>
-          <p className="text-[13px] leading-relaxed text-gray-800 italic">
+        <div className="bg-[#F5F5EE] px-4 py-2 flex-shrink-0 border-t border-gray-200">
+          <div className="text-[9px] font-black tracking-widest text-gray-500 uppercase mb-0.5">
+            Scout Report
+          </div>
+          <p className="text-[11px] leading-snug text-gray-800 italic line-clamp-3">
             &ldquo;{scoutReport}&rdquo;
           </p>
         </div>
       ) : null}
 
-      <div className="relative bg-[#0F0F0F] text-white">
-        <div className="h-1.5" style={{ background: tierBg }} />
-        <div className="px-5 py-3 flex items-center justify-between gap-3">
-          <div className="text-[10px] tracking-widest font-bold text-gray-400">app.salescard.ai</div>
-          <div className="text-[10px] font-black tracking-widest" style={{ color: "#F5B739" }}>
+      {/* Footer ribbon */}
+      <div className="relative bg-[#0F0F0F] text-white flex-shrink-0">
+        <div className="h-1" style={{ background: tierBg }} />
+        <div className="px-4 py-2 flex items-center justify-between gap-3">
+          <div className="text-[9px] tracking-widest font-bold text-gray-400">app.salescard.ai</div>
+          <div className="text-[9px] font-black tracking-widest" style={{ color: "#F5B739" }}>
             {tier.name.toUpperCase()}
           </div>
         </div>
@@ -178,16 +186,16 @@ export function SalesCardBack({
 
 function Meta({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <div className="text-[10px] font-black tracking-widest text-gray-400 uppercase mb-0.5">{label}</div>
-      <div className="font-semibold text-gray-900 truncate">{value}</div>
+    <div className="min-w-0">
+      <div className="text-[9px] font-black tracking-widest text-gray-400 uppercase mb-0.5">{label}</div>
+      <div className="font-semibold text-gray-900 truncate text-[12px]">{value}</div>
     </div>
   );
 }
 
 function Th({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <th className={`px-1.5 py-2 font-black tracking-wider uppercase text-[9px] text-right whitespace-nowrap ${className}`}>
+    <th className={`px-1.5 py-1.5 font-black tracking-wider uppercase text-[9px] text-right whitespace-nowrap ${className}`}>
       {children}
     </th>
   );
@@ -203,7 +211,7 @@ function Td({
   style?: React.CSSProperties;
 }) {
   return (
-    <td className={`px-1.5 py-2 text-right whitespace-nowrap ${className}`} style={style}>
+    <td className={`px-1.5 py-1.5 text-right whitespace-nowrap ${className}`} style={style}>
       {children}
     </td>
   );
