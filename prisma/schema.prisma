@@ -58,6 +58,7 @@ enum SalesRole {
   SDR
   BDR
   AE
+  SDR_BDR_LEADER
 }
 
 enum CardVisibility {
