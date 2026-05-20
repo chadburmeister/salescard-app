@@ -11,6 +11,13 @@ const RANGE_OPTIONS  = ["<50", "50-100", "100-250", "250+"] as const;
 type TargetOpt = (typeof TARGET_OPTIONS)[number] | "";
 type RangeOpt  = (typeof RANGE_OPTIONS)[number]  | "";
 
+const ROLE_BUTTONS: { value: SalesRole; label: string }[] = [
+  { value: "AE",              label: "AE" },
+  { value: "BDR",             label: "BDR" },
+  { value: "SDR",             label: "SDR" },
+  { value: "SDR_BDR_LEADER",  label: "SDR/BDR Leader" },
+];
+
 interface QuarterDescriptor {
   period: string;
   fiscalYear: number;
@@ -98,28 +105,26 @@ export function KpiForm({ quarters, initialRole, initialData }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Role selector */}
       <div className="bg-white border border-gray-200 rounded-2xl p-5">
         <div className="text-xs font-black tracking-widest text-[#3478C0] uppercase mb-3">Your role</div>
         <div className="flex flex-wrap gap-2">
-          {(["AE", "BDR", "SDR"] as SalesRole[]).map(r => (
+          {ROLE_BUTTONS.map(({ value, label }) => (
             <button
-              key={r}
+              key={value}
               type="button"
-              onClick={() => setRole(r)}
+              onClick={() => setRole(value)}
               className={`px-5 py-2.5 rounded-full font-bold text-sm transition border ${
-                role === r
+                role === value
                   ? "bg-[#3478C0] text-white border-[#3478C0]"
                   : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
               }`}
             >
-              {r}
+              {label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Stats table */}
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between flex-wrap gap-2">
           <div>
