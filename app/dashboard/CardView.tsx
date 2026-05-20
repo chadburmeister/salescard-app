@@ -202,10 +202,11 @@ function firstName(name: string): string {
 
 function roleLabel(role: SalesRole): string {
   switch (role) {
-    case "AE":  return "Account Executive";
-    case "BDR": return "BDR";
-    case "SDR": return "SDR";
-    default:    return "Rep";
+    case "AE":             return "Account Executive";
+    case "BDR":            return "BDR";
+    case "SDR":            return "SDR";
+    case "SDR_BDR_LEADER": return "SDR/BDR Leader";
+    default:               return "Rep";
   }
 }
 
