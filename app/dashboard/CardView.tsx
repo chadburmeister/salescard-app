@@ -10,6 +10,7 @@ import { ShareDialog } from "./ShareDialog";
 import { PhotoUploadDialog } from "./PhotoUploadDialog";
 import { CardThemeDialog } from "./CardThemeDialog";
 import { EditCompanyDialog } from "./EditCompanyDialog";
+import { DiscoverabilityToggle } from "./DiscoverabilityToggle";
 
 interface Props {
   user: User;
@@ -117,7 +118,7 @@ export function CardView({ user, card }: Props) {
           <VerificationStatusPanel verifications={card.verifications} />
         )}
 
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-10 flex items-center gap-6 flex-wrap">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6 flex items-center gap-6 flex-wrap">
           <div
             className="w-20 h-20 rounded-full flex items-center justify-center text-white font-black text-3xl"
             style={{ background: `#${tier.color}`, color: tier.textColorOn === "DARK" ? "#0F0F0F" : "#FFFFFF" }}
@@ -143,6 +144,8 @@ export function CardView({ user, card }: Props) {
             <code className="text-sm text-gray-700 bg-gray-100 px-2 py-1 rounded">app.salescard.ai/u/{card.username}</code>
           </div>
         </div>
+
+        <DiscoverabilityToggle initialOptIn={card.recruiterOptIn} />
 
         <div className="text-center text-sm font-bold tracking-widest text-gray-400 uppercase mb-6">
           Your card · front + back
