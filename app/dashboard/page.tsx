@@ -1,7 +1,7 @@
 import { auth, signOut } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
-import { trailingEightQuarters } from "@/lib/quarters";
+import { currentPeriods } from "@/lib/quarters";
 import { KpiForm } from "./KpiForm";
 import { CardView } from "./CardView";
 import Link from "next/link";
@@ -27,6 +27,11 @@ export default async function DashboardPage() {
     redirect("/sign-in");
   }
 
+  // Recruiters get the search app, not the rep dashboard.
+  if (user.isRecruiter) {
+    redirect("/recruiter");
+  }
+
   const hasData = user.card && user.card.quarters.length > 0;
 
   if (hasData && user.card) {
@@ -39,7 +44,7 @@ export default async function DashboardPage() {
   }
 
   // First-time user — show the KPI form
-  const quarters = trailingEightQuarters();
+  const quarters = currentPeriods();
   return (
     <>
       <DashboardHeader name={user.name ?? user.email} />
@@ -51,7 +56,7 @@ export default async function DashboardPage() {
               Welcome, {firstName(user.name ?? user.email)}.
             </h1>
             <p className="text-gray-700 text-lg max-w-2xl">
-              Fill in your last 8 quarters of stats and we&apos;ll generate your SalesCard. You can edit anything later, and you control who sees it.
+              Fill in your recent quarters of stats and we&apos;ll generate your SalesCard. You can edit anything later, and you control who sees it.
             </p>
             <p className="text-sm text-gray-500 mt-3">
               Leave any field blank if you don&apos;t have the number. Your <b>SalesCard Score</b> is calculated from what you provide.
