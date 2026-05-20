@@ -257,6 +257,8 @@ function roleLabel(role: string): string {
       return "BDR";
     case "SDR":
       return "SDR";
+    case "SDR_BDR_LEADER":
+      return "SDR/BDR Leader";
     default:
       return "Sales Rep";
   }
