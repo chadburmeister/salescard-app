@@ -77,6 +77,8 @@ model User {
   currentTitle    String?
   currentCompany  String?
   role            SalesRole?
+  isRecruiter     Boolean   @default(false)
+
   emailVerified   DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
