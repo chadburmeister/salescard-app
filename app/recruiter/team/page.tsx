@@ -46,7 +46,7 @@ export default async function TeamPage() {
       id: i.id,
       email: i.email,
       role: i.role as string,
-      joinUrl: `${baseUrl}/recruiter/join/${i.token}`,
+      joinUrl: `${baseUrl}/join/${i.token}`,
       expires: fmtDate(i.expiresAt),
     })),
   };
