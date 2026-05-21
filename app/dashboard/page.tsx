@@ -11,7 +11,6 @@ export default async function DashboardPage() {
   if (!session?.user?.id) {
     redirect("/sign-in");
   }
-
   const user = await db.user.findUnique({
     where: { id: session.user.id },
     include: {
@@ -27,17 +26,18 @@ export default async function DashboardPage() {
     redirect("/sign-in");
   }
 
-  // Recruiters get the search app, not the rep dashboard.
-  if (user.isRecruiter) {
+  const hasData = !!(user.card && user.card.quarters.length > 0);
+
+  // Recruiters with no card of their own go straight to the recruiter workspace.
+  // Recruiters who ALSO have a card stay here and get a link across (no trap).
+  if (user.isRecruiter && !hasData) {
     redirect("/recruiter");
   }
-
-  const hasData = user.card && user.card.quarters.length > 0;
 
   if (hasData && user.card) {
     return (
       <>
-        <DashboardHeader name={user.name ?? user.email} />
+        <DashboardHeader name={user.name ?? user.email} isRecruiter={user.isRecruiter} />
         <CardView user={user} card={user.card} />
       </>
     );
@@ -47,7 +47,7 @@ export default async function DashboardPage() {
   const quarters = currentPeriods();
   return (
     <>
-      <DashboardHeader name={user.name ?? user.email} />
+      <DashboardHeader name={user.name ?? user.email} isRecruiter={user.isRecruiter} />
       <main className="min-h-screen bg-white">
         <div className="max-w-5xl mx-auto px-6 py-12">
           <div className="mb-8">
@@ -69,7 +69,7 @@ export default async function DashboardPage() {
   );
 }
 
-function DashboardHeader({ name }: { name: string }) {
+function DashboardHeader({ name, isRecruiter }: { name: string; isRecruiter?: boolean }) {
   return (
     <header className="sticky top-0 z-50 bg-white/85 backdrop-blur border-b border-gray-100">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -78,6 +78,11 @@ function DashboardHeader({ name }: { name: string }) {
           <span className="text-[#10B981]">Card</span>
         </Link>
         <div className="flex items-center gap-4">
+          {isRecruiter && (
+            <Link href="/recruiter" className="text-sm font-semibold text-[#3478C0] hover:underline">
+              Recruiter workspace →
+            </Link>
+          )}
           <span className="text-sm text-gray-500 hidden sm:inline">{name}</span>
           <form action={async () => { "use server"; await signOut({ redirectTo: "/" }); }}>
             <button type="submit" className="text-sm font-semibold text-gray-700 hover:text-[#3478C0]">
