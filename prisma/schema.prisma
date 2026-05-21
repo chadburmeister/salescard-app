@@ -87,6 +87,11 @@ model User {
   sessions        Session[]
   card            Card?
   employments     Employment[]
+
+ownedOrgs       Organization[]  @relation("OrgOwner")
+  orgMemberships  OrgMembership[]
+  orgInvitesSent  OrgInvite[]     @relation("OrgInvitesSent")
+
 }
 
 model Card {
@@ -209,5 +214,70 @@ model VerificationRequest {
   card            Card                @relation(fields: [cardId], references: [id], onDelete: Cascade)
 
   @@index([cardId, status])
+  @@index([token])
+}
+
+// =================== Recruiter organizations (Phase 2) ===================
+
+enum OrgRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum OrgInviteStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+  EXPIRED
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  ownerId     String                       // the User who created / owns billing
+  seatLimit   Int      @default(5)         // max active members (owner counts as one)
+  plan        String   @default("team")    // "solo" | "team" — informational for now
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner       User            @relation("OrgOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  memberships OrgMembership[]
+  invites     OrgInvite[]
+
+  @@index([ownerId])
+}
+
+model OrgMembership {
+  id        String   @id @default(cuid())
+  orgId     String
+  userId    String
+  role      OrgRole  @default(MEMBER)
+  createdAt DateTime @default(now())
+
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, userId])
+  @@index([userId])
+}
+
+model OrgInvite {
+  id          String          @id @default(cuid())
+  orgId       String
+  email       String
+  role        OrgRole         @default(MEMBER)
+  token       String          @unique @default(cuid())
+  status      OrgInviteStatus @default(PENDING)
+  invitedById String
+  createdAt   DateTime        @default(now())
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+
+  org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  invitedBy   User         @relation("OrgInvitesSent", fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@index([orgId, status])
+  @@index([email])
   @@index([token])
 }
