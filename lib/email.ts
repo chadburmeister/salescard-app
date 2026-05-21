@@ -5,18 +5,14 @@
 //   EMAIL_FROM      — "SalesCard <verify@salescard.ai>" or similar
 //   NEXTAUTH_URL    — used to build absolute links back to the app
 //     (defaults to https://app.salescard.ai if unset in prod)
-
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
-
 function fromAddress(): string {
   return process.env.EMAIL_FROM || "SalesCard <verify@salescard.ai>";
 }
-
 function baseUrl(): string {
   // NEXTAUTH_URL is set in Vercel env vars; fall back to the prod URL.
   return (process.env.NEXTAUTH_URL || "https://app.salescard.ai").replace(/\/$/, "");
 }
-
 async function sendEmail(opts: {
   to: string;
   subject: string;
@@ -49,11 +45,9 @@ async function sendEmail(opts: {
     throw new Error(`Resend email failed: ${res.status} ${errText}`);
   }
 }
-
 // =========================================================================
 // VERIFICATION REQUEST — sent to the verifier
 // =========================================================================
-
 export interface VerificationEmailPayload {
   verifierEmail: string;
   verifierName?: string | null;
@@ -69,13 +63,11 @@ export interface VerificationEmailPayload {
   }>;
   token: string;
 }
-
 export async function sendVerificationRequest(p: VerificationEmailPayload): Promise<void> {
   const url = `${baseUrl()}/verify/${p.token}`;
   const greeting = p.verifierName ? `Hi ${firstName(p.verifierName)},` : "Hi,";
   const relPhrase = p.relationship ? ` ${describeRelationship(p.relationship)}` : "";
   const intro = `${p.repName} is building their SalesCard — a verified record of their sales performance — and listed you as${relPhrase ? relPhrase : " someone"} who can confirm their numbers.`;
-
   const quartersTextLines = p.quarters.map(q => {
     const parts: string[] = [];
     if (q.closedWon) parts.push(`closed-won ${q.closedWon}`);
@@ -84,7 +76,6 @@ export async function sendVerificationRequest(p: VerificationEmailPayload): Prom
     if (q.pipeline)  parts.push(`pipeline ${q.pipeline}`);
     return `  • ${q.period}${parts.length ? ` — ${parts.join(", ")}` : ""}`;
   }).join("\n");
-
   const text = (
     `${greeting}\n\n` +
     `${intro}\n\n` +
@@ -96,7 +87,6 @@ export async function sendVerificationRequest(p: VerificationEmailPayload): Prom
     `Thanks,\n` +
     `SalesCard\n`
   );
-
   const html = `<!doctype html>
 <html><body style="margin:0;padding:0;background:#fafafa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#111827;">
 <div style="max-width:580px;margin:32px auto;background:white;border-radius:16px;padding:36px 32px;">
@@ -105,15 +95,12 @@ export async function sendVerificationRequest(p: VerificationEmailPayload): Prom
       <span style="color:#3478C0;">Sales</span><span style="color:#10B981;">Card</span>
     </span>
   </div>
-
   <h1 style="font-size:22px;line-height:1.2;letter-spacing:-0.02em;font-weight:900;margin:0 0 12px;">
     Verify ${escapeHtml(p.repName)}'s sales numbers
   </h1>
-
   <p style="font-size:15px;line-height:1.55;color:#374151;margin:0 0 18px;">
     ${greeting === "Hi," ? "" : escapeHtml(greeting) + "<br><br>"}${escapeHtml(intro)}
   </p>
-
   <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;padding:18px 22px;margin:18px 0;">
     <div style="font-size:11px;font-weight:800;letter-spacing:0.1em;color:#6B7280;margin-bottom:10px;text-transform:uppercase;">
       Quarters they're asking you to verify
@@ -132,25 +119,20 @@ export async function sendVerificationRequest(p: VerificationEmailPayload): Prom
       </div>
     `).join("")}
   </div>
-
   <div style="margin:28px 0;text-align:center;">
     <a href="${url}" style="display:inline-block;background:#3478C0;color:white;font-weight:700;font-size:15px;padding:14px 28px;border-radius:999px;text-decoration:none;">
       Confirm or flag these numbers
     </a>
   </div>
-
   <p style="font-size:13px;line-height:1.55;color:#6B7280;margin:18px 0 0;">
     Takes ~30 seconds. No login required. You'll see ${escapeHtml(p.repName)}'s name and the numbers — confirm with one click, or report a discrepancy.
   </p>
-
   <hr style="border:0;border-top:1px solid #e5e7eb;margin:28px 0;">
-
   <p style="font-size:12px;color:#9ca3af;margin:0;">
     If you weren't expecting this email, you can ignore it — no action taken. Sent by SalesCard at the request of ${escapeHtml(p.repName)}.
   </p>
 </div>
 </body></html>`;
-
   await sendEmail({
     to: p.verifierEmail,
     subject: `${p.repName} asked you to verify their sales numbers`,
@@ -159,11 +141,9 @@ export async function sendVerificationRequest(p: VerificationEmailPayload): Prom
     replyTo: p.repEmail,
   });
 }
-
 // =========================================================================
 // VERIFICATION RESULT — sent to the rep when verifier responds
 // =========================================================================
-
 export interface VerificationResultPayload {
   repEmail: string;
   repName: string;
@@ -174,14 +154,11 @@ export interface VerificationResultPayload {
   approvedPeriods: string[];
   cardUrl: string;  // absolute URL to /dashboard
 }
-
 export async function sendVerificationResult(p: VerificationResultPayload): Promise<void> {
   const subject = p.approved
     ? `Your SalesCard quarters got verified ✓`
     : `Your SalesCard verification was flagged`;
-
   const verifierLabel = p.verifierName ? `${p.verifierName} (${p.verifierEmail})` : p.verifierEmail;
-
   const text = p.approved
     ? `Good news — ${verifierLabel} just confirmed your numbers for ${p.approvedPeriods.join(", ")}. ` +
       `Those quarters now carry full weight in your SalesCard Score. ` +
@@ -189,7 +166,6 @@ export async function sendVerificationResult(p: VerificationResultPayload): Prom
     : `${verifierLabel} flagged your verification request${p.rejectionReason ? ` with this note: "${p.rejectionReason}"` : ""}. ` +
       `Your numbers stay on your card at half weight until verified by someone else. ` +
       `View your card: ${p.cardUrl}`;
-
   const html = `<!doctype html>
 <html><body style="margin:0;padding:0;background:#fafafa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#111827;">
 <div style="max-width:560px;margin:32px auto;background:white;border-radius:16px;padding:36px 32px;">
@@ -223,7 +199,6 @@ export async function sendVerificationResult(p: VerificationResultPayload): Prom
   </div>
 </div>
 </body></html>`;
-
   await sendEmail({
     to: p.repEmail,
     subject,
@@ -231,13 +206,71 @@ export async function sendVerificationResult(p: VerificationResultPayload): Prom
     text,
   });
 }
-
+// =========================================================================
+// ORG INVITE — sent to a teammate invited to a recruiter team
+// =========================================================================
+export interface OrgInviteEmailPayload {
+  inviteeEmail: string;
+  inviterName: string;
+  inviterEmail?: string | null;
+  orgName: string;
+  role: string; // "MEMBER" | "ADMIN"
+  token: string;
+}
+export async function sendOrgInvite(p: OrgInviteEmailPayload): Promise<void> {
+  const url = `${baseUrl()}/join/${p.token}`;
+  const roleWord = p.role && p.role.toUpperCase() === "ADMIN" ? "an admin" : "a member";
+  const intro =
+    `${p.inviterName} invited you to join ${p.orgName} on SalesCard as ${roleWord}. ` +
+    `SalesCard lets your team search a pool of sales reps with verified, quarter-by-quarter numbers — ` +
+    `so you stop taking resumes at face value.`;
+  const text = (
+    `Hi,\n\n` +
+    `${intro}\n\n` +
+    `Accept your invite (sign in with LinkedIn — takes a minute):\n` +
+    `${url}\n\n` +
+    `If you weren't expecting this, you can ignore it — no action taken.\n\n` +
+    `Thanks,\n` +
+    `SalesCard\n`
+  );
+  const html = `<!doctype html>
+<html><body style="margin:0;padding:0;background:#fafafa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#111827;">
+<div style="max-width:560px;margin:32px auto;background:white;border-radius:16px;padding:36px 32px;">
+  <div style="margin-bottom:24px;font-weight:900;font-size:22px;letter-spacing:-0.02em;">
+    <span style="color:#3478C0;">Sales</span><span style="color:#10B981;">Card</span>
+  </div>
+  <h1 style="font-size:22px;line-height:1.2;letter-spacing:-0.02em;font-weight:900;margin:0 0 12px;">
+    Join ${escapeHtml(p.orgName)} on SalesCard
+  </h1>
+  <p style="font-size:15px;line-height:1.55;color:#374151;margin:0 0 18px;">
+    ${escapeHtml(intro)}
+  </p>
+  <div style="margin:28px 0;text-align:center;">
+    <a href="${url}" style="display:inline-block;background:#3478C0;color:white;font-weight:700;font-size:15px;padding:14px 28px;border-radius:999px;text-decoration:none;">
+      Accept invitation
+    </a>
+  </div>
+  <p style="font-size:13px;line-height:1.55;color:#6B7280;margin:18px 0 0;">
+    You'll sign in with LinkedIn to accept. This unlocks your team's recruiter search and analytics.
+  </p>
+  <hr style="border:0;border-top:1px solid #e5e7eb;margin:28px 0;">
+  <p style="font-size:12px;color:#9ca3af;margin:0;">
+    If you weren't expecting this email, you can ignore it — no action taken. Sent by SalesCard at the request of ${escapeHtml(p.inviterName)}.
+  </p>
+</div>
+</body></html>`;
+  await sendEmail({
+    to: p.inviteeEmail,
+    subject: `${p.inviterName} invited you to join ${p.orgName} on SalesCard`,
+    html,
+    text,
+    replyTo: p.inviterEmail || undefined,
+  });
+}
 // helpers
-
 function firstName(name: string): string {
   return name.split(/\s+/)[0] || name;
 }
-
 function describeRelationship(r: string): string {
   const lower = r.toLowerCase();
   if (lower.includes("manager")) return "their current or former manager";
@@ -245,7 +278,6 @@ function describeRelationship(r: string): string {
   if (lower.includes("ops") || lower.includes("rev")) return "a RevOps partner";
   return r;
 }
-
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
