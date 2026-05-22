@@ -5,7 +5,6 @@ import { currentPeriods } from "@/lib/quarters";
 import { KpiForm } from "./KpiForm";
 import { CardView } from "./CardView";
 import Link from "next/link";
-
 export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user?.id) {
@@ -25,15 +24,12 @@ export default async function DashboardPage() {
   if (!user) {
     redirect("/sign-in");
   }
-
   const hasData = !!(user.card && user.card.quarters.length > 0);
-
   // Recruiters with no card of their own go straight to the recruiter workspace.
   // Recruiters who ALSO have a card stay here and get a link across (no trap).
   if (user.isRecruiter && !hasData) {
     redirect("/recruiter");
   }
-
   if (hasData && user.card) {
     return (
       <>
@@ -42,7 +38,6 @@ export default async function DashboardPage() {
       </>
     );
   }
-
   // First-time user — show the KPI form
   const quarters = currentPeriods();
   return (
@@ -68,7 +63,6 @@ export default async function DashboardPage() {
     </>
   );
 }
-
 function DashboardHeader({ name, isRecruiter }: { name: string; isRecruiter?: boolean }) {
   return (
     <header className="sticky top-0 z-50 bg-white/85 backdrop-blur border-b border-gray-100">
@@ -78,6 +72,9 @@ function DashboardHeader({ name, isRecruiter }: { name: string; isRecruiter?: bo
           <span className="text-[#10B981]">Card</span>
         </Link>
         <div className="flex items-center gap-4">
+          <Link href="/coach" className="text-sm font-semibold text-gray-700 hover:text-[#3478C0]">
+            Goals
+          </Link>
           {isRecruiter && (
             <Link href="/recruiter" className="text-sm font-semibold text-[#3478C0] hover:underline">
               Recruiter workspace →
@@ -94,7 +91,6 @@ function DashboardHeader({ name, isRecruiter }: { name: string; isRecruiter?: bo
     </header>
   );
 }
-
 function firstName(name: string): string {
   return name.split(/\s+/)[0] || name;
 }
