@@ -286,3 +286,76 @@ function escapeHtml(s: string): string {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 }
+
+// =========================================================================
+// BIRTHDAY APPROVAL — emailed to the rep so they can approve before sending
+// =========================================================================
+
+export interface BirthdayApprovalPayload {
+  repEmail: string;
+  repName: string;
+  contactName: string;
+  contactEmail: string;
+  birthdayLabel: string;
+  group: string;
+  message: string;
+  includeGift: boolean;
+  includeCartoon: boolean;
+  giftLabel?: string;
+}
+
+export async function sendBirthdayApprovalEmail(p: BirthdayApprovalPayload): Promise<void> {
+  const dash = `${baseUrl()}/dashboard/birthdays`;
+  const contactFirst = firstName(p.contactName);
+  const subject = `Approve: birthday message for ${p.contactName} (${p.birthdayLabel})`;
+
+  const extras: string[] = [];
+  if (p.includeCartoon) extras.push("a cartoon portrait");
+  if (p.includeGift) extras.push(p.giftLabel || "a gift card");
+
+  const text = [
+    `Hi ${firstName(p.repName)},`,
+    ``,
+    `Here's the birthday message we'd like to send to ${p.contactName} (${p.contactEmail}) on ${p.birthdayLabel}:`,
+    ``,
+    `"${p.message}"`,
+    ``,
+    extras.length ? `Includes ${extras.join(" and ")}.` : ``,
+    ``,
+    `Nothing sends until you approve it. Review, edit, or approve here: ${dash}`,
+    ``,
+    `— SalesCard Birthdays`,
+  ].filter(Boolean).join("\n");
+
+  const html = `<!doctype html><html><body style="margin:0;background:#F8FAFC;font-family:Arial,Helvetica,sans-serif;">
+<div style="max-width:520px;margin:0 auto;padding:24px;">
+  <div style="background:#ffffff;border:1px solid #E5E7EB;border-radius:16px;overflow:hidden;">
+    <div style="background:linear-gradient(90deg,#F43F5E,#FB923C);padding:28px 24px;text-align:center;color:#ffffff;">
+      <div style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;opacity:.9;">Approval needed</div>
+      <div style="font-size:24px;font-weight:800;margin-top:6px;">Happy Birthday, ${escapeHtml(contactFirst)}!</div>
+      <div style="font-size:14px;opacity:.95;margin-top:2px;">${escapeHtml(p.birthdayLabel)} &middot; ${escapeHtml(p.group)}</div>
+    </div>
+    <div style="padding:22px 24px;">
+      <p style="font-size:14.5px;color:#374151;margin:0 0 14px;">
+        Hi ${escapeHtml(firstName(p.repName))}, here's the message we'd like to send to
+        <strong>${escapeHtml(p.contactName)}</strong> (${escapeHtml(p.contactEmail)}):
+      </p>
+      <div style="background:#F8FAFC;border:1px solid #E5E7EB;border-radius:12px;padding:16px;color:#111827;font-size:15px;line-height:1.5;">
+        ${escapeHtml(p.message)}
+      </div>
+      ${extras.length ? `<p style="font-size:13.5px;color:#6B7280;margin:14px 0 0;">Includes ${escapeHtml(extras.join(" and "))}.</p>` : ""}
+      <div style="margin:22px 0 6px;text-align:center;">
+        <a href="${dash}" style="display:inline-block;background:#10B981;color:white;font-weight:700;padding:12px 24px;border-radius:999px;text-decoration:none;">
+          Review &amp; approve &rarr;
+        </a>
+      </div>
+      <p style="font-size:12.5px;color:#9CA3AF;text-align:center;margin:10px 0 0;">
+        Nothing is sent to ${escapeHtml(contactFirst)} until you approve it.
+      </p>
+    </div>
+  </div>
+</div>
+</body></html>`;
+
+  await sendEmail({ to: p.repEmail, subject, html, text });
+}

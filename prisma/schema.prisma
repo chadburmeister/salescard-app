@@ -87,6 +87,7 @@ model User {
   sessions        Session[]
   card            Card?
   employments     Employment[]
+  birthdayContacts BirthdayContact[]
 
 ownedOrgs       Organization[]  @relation("OrgOwner")
   orgMemberships  OrgMembership[]
@@ -280,4 +281,34 @@ model OrgInvite {
   @@index([orgId, status])
   @@index([email])
   @@index([token])
+}
+
+// =================== Birthdays feature ===================
+// Approval-first birthday emails to a rep's contacts, grouped Business /
+// Personal / Family. Phase 1: card + optional cartoon portrait + optional
+// gift card link; every message approved by the rep before it sends.
+
+enum BirthdayGroup {
+  BUSINESS
+  PERSONAL
+  FAMILY
+}
+
+model BirthdayContact {
+  id             String        @id @default(cuid())
+  userId         String
+  name           String
+  email          String
+  company        String?
+  birthday       DateTime?
+  group          BirthdayGroup @default(PERSONAL)
+  includeGift    Boolean       @default(true)
+  includeCartoon Boolean       @default(false)
+
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, group])
 }
