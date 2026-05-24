@@ -75,6 +75,9 @@ function DashboardHeader({ name, isRecruiter }: { name: string; isRecruiter?: bo
           <Link href="/coach" className="text-sm font-semibold text-gray-700 hover:text-[#3478C0]">
             Goals
           </Link>
+          <Link href="/dashboard/birthdays" className="text-sm font-semibold text-gray-700 hover:text-[#3478C0]">
+            Birthdays
+          </Link>
           {isRecruiter && (
             <Link href="/recruiter" className="text-sm font-semibold text-[#3478C0] hover:underline">
               Recruiter workspace →
