@@ -35,6 +35,7 @@ import {
   removeBirthdayContact,
   updateBirthdayOptions,
   sendApprovalDraft,
+  moveBirthdayContact,
 } from "./actions";
 
 const ROSE_GRADIENT = "linear-gradient(90deg, #F43F5E, #FB923C)";
@@ -171,6 +172,19 @@ export function BirthdaysClient({
     }
   }
 
+  async function handleMove(id: string, group: GroupKey) {
+    const prevGroup = contacts.find((c) => c.id === id)?.group;
+    if (prevGroup === group) return;
+    setContacts((prev) => prev.map((c) => (c.id === id ? { ...c, group } : c)));
+    try {
+      await moveBirthdayContact(id, group);
+      flash(`Moved to ${GROUP_LABEL[group]}`);
+    } catch (err) {
+      if (prevGroup) setContacts((prev) => prev.map((c) => (c.id === id ? { ...c, group: prevGroup } : c)));
+      flash(err instanceof Error ? err.message : "Couldn't move that contact");
+    }
+  }
+
   async function toggleOption(id: string, key: "includeGift" | "includeCartoon", value: boolean) {
     setContacts((prev) => prev.map((c) => (c.id === id ? { ...c, [key]: value } : c)));
     setPreview((p) => (p && p.id === id ? { ...p, [key]: value } : p));
@@ -263,6 +277,18 @@ export function BirthdaysClient({
             <div className="border-b border-gray-100 p-6 lg:col-span-2 lg:border-b-0 lg:border-r">
               <p className="text-sm font-medium text-gray-500">{GROUP_META[activeGroup].blurb}</p>
               <form onSubmit={handleAdd} className="mt-4 space-y-3">
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-wide text-gray-400">Group</label>
+                  <select
+                    value={activeGroup}
+                    onChange={(e) => setActiveGroup(e.target.value as GroupKey)}
+                    className={cn(inputCls, "mt-1 text-gray-700")}
+                  >
+                    <option value="business">Business</option>
+                    <option value="personal">Personal</option>
+                    <option value="family">Family</option>
+                  </select>
+                </div>
                 <input
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -345,6 +371,17 @@ export function BirthdaysClient({
                         <Calendar className="h-3.5 w-3.5" />
                         {c.birthday ? formatBirthday(c.birthday) : "—"}
                       </span>
+                      <select
+                        value={c.group}
+                        onChange={(e) => handleMove(c.id, e.target.value as GroupKey)}
+                        className="hidden rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs font-semibold text-gray-600 outline-none transition hover:border-gray-300 focus:border-rose-400 sm:block"
+                        aria-label={`Move ${c.name} to a different group`}
+                        title="Move to a different group"
+                      >
+                        <option value="business">Business</option>
+                        <option value="personal">Personal</option>
+                        <option value="family">Family</option>
+                      </select>
                       <button
                         onClick={() => setPreview(c)}
                         className="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 ring-1 ring-rose-200 transition hover:bg-rose-50"
