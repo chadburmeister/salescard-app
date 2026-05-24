@@ -124,6 +124,15 @@ export async function updateBirthdayOptions(
   revalidatePath("/dashboard/birthdays");
 }
 
+export async function moveBirthdayContact(id: string, group: GroupKey): Promise<void> {
+  const userId = await requireUserId();
+  await db.birthdayContact.updateMany({
+    where: { id, userId },
+    data: { group: toGroupEnum(group) },
+  });
+  revalidatePath("/dashboard/birthdays");
+}
+
 export async function sendApprovalDraft(id: string): Promise<{ ok: true; to: string }> {
   const userId = await requireUserId();
   const [user, contact] = await Promise.all([
