@@ -85,7 +85,7 @@ export function SalesCardFront({
           <div className="mt-2.5">
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#057642] bg-[#EAF5EE] border border-[#BFE0CC] px-2.5 py-1 rounded-full">
               <span className="w-[7px] h-[7px] rounded-full bg-[#057642]" />
-              Open to roles
+              Open to work
             </span>
           </div>
         ) : null}
