@@ -302,8 +302,14 @@ model BirthdayContact {
   company        String?
   birthday       DateTime?
   group          BirthdayGroup @default(PERSONAL)
-  includeGift    Boolean       @default(true)
+  includeGift    Boolean       @default(true)   // dormant — gift card feature removed
   includeCartoon Boolean       @default(false)
+
+  // Card Studio: source photo, generated cartoon, saved words + chosen style
+  photoUrl       String?
+  cartoonUrl     String?
+  cardMessage    String?       @db.Text
+  cartoonStyle   String?
 
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
@@ -337,9 +343,10 @@ model BirthdayDispatch {
 
   message        String          @db.Text                  // proposed message (rep may edit on approval)
   group          BirthdayGroup
-  includeGift    Boolean         @default(false)
+  includeGift    Boolean         @default(false)  // dormant — gift card feature removed
   includeCartoon Boolean         @default(false)
-  giftLabel      String?
+  giftLabel      String?                          // dormant
+  cartoonUrl     String?                          // snapshot of the contact's cartoon at send time
 
   status         DispatchStatus  @default(PENDING_APPROVAL)
   approvalSentAt DateTime?

@@ -13,8 +13,6 @@ export const GROUP_LABEL: Record<GroupKey, string> = {
   family: "Family",
 };
 
-export const DEFAULT_GIFT_LABEL = "$25 Amazon gift card";
-
 export function toGroupKey(g: BirthdayGroup): GroupKey {
   return g.toLowerCase() as GroupKey;
 }
@@ -30,8 +28,11 @@ export interface BirthdayContactDTO {
   company: string | null;
   birthday: string | null;
   group: GroupKey;
-  includeGift: boolean;
   includeCartoon: boolean;
+  photoUrl: string | null;
+  cartoonUrl: string | null;
+  cardMessage: string | null;
+  cartoonStyle: string | null;
 }
 
 const MONTHS = [
@@ -142,3 +143,33 @@ export function relativeDayLabel(daysUntil: number): string {
   if (daysUntil === 1) return "tomorrow";
   return `in ${daysUntil} days`;
 }
+
+// =========================================================================
+// Cartoon styles (client-safe — labels only; prompts live in lib/cartoon.ts)
+// =========================================================================
+
+export type CartoonStyle = "cartoon" | "pixar" | "caricature" | "watercolor";
+
+export const CARTOON_STYLES: { key: CartoonStyle; label: string }[] = [
+  { key: "cartoon", label: "Friendly cartoon" },
+  { key: "pixar", label: "Pixar-style 3D" },
+  { key: "caricature", label: "Caricature" },
+  { key: "watercolor", label: "Watercolor" },
+];
+
+export const DEFAULT_CARTOON_STYLE: CartoonStyle = "cartoon";
+
+// =========================================================================
+// Card tones (client-safe — used by the Card Studio writer controls)
+// =========================================================================
+
+export type CardTone = "warm" | "funny" | "heartfelt" | "professional";
+
+export const CARD_TONES: { key: CardTone; label: string }[] = [
+  { key: "warm", label: "Warm" },
+  { key: "funny", label: "Funny" },
+  { key: "heartfelt", label: "Heartfelt" },
+  { key: "professional", label: "Professional" },
+];
+
+export const DEFAULT_CARD_TONE: CardTone = "warm";
