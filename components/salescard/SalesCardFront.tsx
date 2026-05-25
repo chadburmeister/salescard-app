@@ -74,9 +74,6 @@ export function SalesCardFront({
 
         <div className="mt-2.5 flex items-center gap-1.5">
           <span className="text-[21px] font-semibold leading-tight">{name}</span>
-          <span className="inline-flex items-center justify-center w-[18px] h-[18px] rounded-full bg-[#0A66C2] text-white shrink-0">
-            <Tick size={11} />
-          </span>
         </div>
         <div className="text-sm mt-0.5">{role}</div>
         <div className="text-[13px] text-[#666666] mt-0.5">Verified sales record</div>
