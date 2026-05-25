@@ -53,7 +53,7 @@ export function SalesCardFront({
   ];
 
   return (
-    <div className={`bg-white border border-[#E2E2E2] rounded-xl overflow-hidden text-[#1B1F23] ${className ?? ""}`}>
+    <div className={`bg-white border border-[#E2E2E2] rounded-xl overflow-hidden flex flex-col min-h-[500px] text-[#1B1F23] ${className ?? ""}`}>
       <div className="relative h-20 bg-[#0A66C2]">
         <span className="absolute top-2.5 right-4 text-white text-[13px] font-semibold">SalesCard</span>
       </div>
