@@ -30,13 +30,50 @@ export function stylePrompt(style: string | null | undefined): string {
   return STYLE_PROMPTS[style ?? "cartoon"] ?? STYLE_PROMPTS.cartoon;
 }
 
-function buildPrompt(style: string): string {
+// Strict content guardrail applied to EVERY generated image.
+const SAFETY =
+  "Keep the image wholesome, warm, and strictly family-friendly. Absolutely no nudity, sexual, suggestive, violent, gory, hateful, or otherwise R-rated content. If a request would require any of that, instead produce a tasteful, celebratory birthday image.";
+const CARD =
+  "Roughly square composition, suitable for the front of a birthday greeting card. Do not put any text, letters, or words in the image.";
+
+function buildPrompt(opts: { scene: string; style: string; customPrompt?: string }): string {
+  const { scene, style, customPrompt } = opts;
+
+  if (scene === "silhouette") {
+    return [
+      "Create a clean, elegant black silhouette of the person in this photo — a solid dark figure (head and shoulders) set against a bright, cheerful birthday background with soft balloons and a little confetti.",
+      "Capture their recognizable outline: hairstyle and posture.",
+      CARD,
+      SAFETY,
+    ].join(" ");
+  }
+
+  if (scene === "silhouette-cake") {
+    return [
+      "Create a clean, elegant black silhouette of the person in this photo beside a birthday cake topped with lit candles — a solid dark figure against a bright, cheerful celebratory background with balloons and confetti.",
+      "Capture their recognizable outline: hairstyle and posture.",
+      CARD,
+      SAFETY,
+    ].join(" ");
+  }
+
+  if (scene === "custom" && customPrompt && customPrompt.trim()) {
+    return [
+      `Create a birthday greeting-card image featuring the person in this photo. The user's request: "${customPrompt.trim()}".`,
+      `Render it as ${stylePrompt(style)}, keeping their likeness recognizable.`,
+      CARD,
+      SAFETY,
+    ].join(" ");
+  }
+
+  // portrait (default)
   return [
     `Transform the real person in this photo into ${stylePrompt(style)}.`,
     "Keep their likeness clearly recognizable — hair, skin tone, glasses, facial hair, and other distinctive features — but make it a flattering, joyful birthday portrait with a big happy smile.",
     "Surround them with a cheerful birthday scene: a party hat or balloons, a little confetti, and a warm festive background.",
-    "Head-and-shoulders, roughly square composition, suitable for the front of a birthday greeting card.",
-    "Do not put any text, letters, or words in the image.",
+    "Head-and-shoulders.",
+    CARD,
+    SAFETY,
   ].join(" ");
 }
 
@@ -57,6 +94,8 @@ interface GeminiResponse {
 export interface GenerateCartoonInput {
   photoUrl: string; // public URL of the uploaded source photo (Vercel Blob)
   style: string;
+  scene: string; // portrait | silhouette | silhouette-cake | custom
+  customPrompt?: string; // free-text description when scene === "custom"
   ownerId: string; // signed-in rep, used in the blob key
   contactId: string;
 }
@@ -82,7 +121,7 @@ export async function generateCartoon(input: GenerateCartoonInput): Promise<stri
     contents: [
       {
         parts: [
-          { text: buildPrompt(input.style) },
+          { text: buildPrompt({ scene: input.scene, style: input.style, customPrompt: input.customPrompt }) },
           { inline_data: { mime_type: srcMime, data: srcBuf.toString("base64") } },
         ],
       },
@@ -98,6 +137,16 @@ export async function generateCartoon(input: GenerateCartoonInput): Promise<stri
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
     console.error("[cartoon] Gemini error", res.status, detail);
+    if (res.status === 429) {
+      throw new Error(
+        "Google's image service is over its quota right now. Make sure billing is enabled on your Gemini key, then try again in a minute.",
+      );
+    }
+    if (res.status === 400 || res.status === 403) {
+      throw new Error(
+        "Google rejected the image request — check that your Gemini API key is valid and has image generation enabled.",
+      );
+    }
     throw new Error(`The image service hit a snag (${res.status}). Try again in a moment.`);
   }
 

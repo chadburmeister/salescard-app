@@ -20,34 +20,66 @@ async function ownContact(id: string, userId: string): Promise<BirthdayContact> 
   return contact;
 }
 
+export type CartoonResult = { ok: true; url: string } | { ok: false; error: string };
+export type WordsResult = { ok: true; message: string } | { ok: false; error: string };
+
+// Light family-friendly guard for the free-text "Something else" description.
+// The image prompt and Google's own safety filters are the main backstops; this
+// just catches obvious attempts and gives a kind, clear message.
+const BLOCKED_TERMS = [
+  "nude", "naked", "nsfw", "porn", "explicit", "erotic", "sexual", " sex ",
+  "fetish", "lingerie", "gore", "bloody", "decapitat", "mutilat",
+];
+
 /** Generate (or regenerate) the cartoon for a contact and save it. */
-export async function generateCartoonForContact(
-  contactId: string,
-  style: string,
-): Promise<{ url: string }> {
-  const userId = await requireUserId();
-  const contact = await ownContact(contactId, userId);
-  if (!contact.photoUrl) throw new Error("Upload a photo first.");
+export async function generateCartoonForContact(input: {
+  contactId: string;
+  style: string;
+  scene: string;
+  customPrompt?: string;
+}): Promise<CartoonResult> {
+  try {
+    const userId = await requireUserId();
+    const contact = await ownContact(input.contactId, userId);
+    if (!contact.photoUrl) return { ok: false, error: "Upload a photo first." };
 
-  const url = await generateCartoon({
-    photoUrl: contact.photoUrl,
-    style,
-    ownerId: userId,
-    contactId,
-  });
+    const custom = (input.customPrompt || "").trim();
+    if (input.scene === "custom") {
+      if (!custom) return { ok: false, error: "Describe what you'd like the picture to be." };
+      const padded = ` ${custom.toLowerCase()} `;
+      if (BLOCKED_TERMS.some((t) => padded.includes(t))) {
+        return {
+          ok: false,
+          error: "Let's keep birthday cards friendly — please describe something family-appropriate.",
+        };
+      }
+    }
 
-  await db.birthdayContact.update({
-    where: { id: contactId },
-    data: { cartoonUrl: url, cartoonStyle: style, includeCartoon: true },
-  });
-  // Keep any not-yet-approved birthday in sync with the new cartoon.
-  await db.birthdayDispatch.updateMany({
-    where: { contactId, status: "PENDING_APPROVAL" },
-    data: { cartoonUrl: url },
-  });
-  revalidatePath(`/dashboard/birthdays/studio/${contactId}`);
-  revalidatePath("/dashboard/birthdays");
-  return { url };
+    const url = await generateCartoon({
+      photoUrl: contact.photoUrl,
+      style: input.style,
+      scene: input.scene,
+      customPrompt: custom || undefined,
+      ownerId: userId,
+      contactId: input.contactId,
+    });
+
+    await db.birthdayContact.update({
+      where: { id: input.contactId },
+      data: { cartoonUrl: url, cartoonStyle: input.style, includeCartoon: true },
+    });
+    // Keep any not-yet-approved birthday in sync with the new image.
+    await db.birthdayDispatch.updateMany({
+      where: { contactId: input.contactId, status: "PENDING_APPROVAL" },
+      data: { cartoonUrl: url },
+    });
+    revalidatePath(`/dashboard/birthdays/studio/${input.contactId}`);
+    revalidatePath("/dashboard/birthdays");
+    return { ok: true, url };
+  } catch (err) {
+    console.error("[generateCartoonForContact]", err);
+    return { ok: false, error: err instanceof Error ? err.message : "Couldn't generate the image." };
+  }
 }
 
 /** Draft card words with the AI greeting-card writer (does not save). */
@@ -55,16 +87,21 @@ export async function generateCardWordsForContact(input: {
   contactId: string;
   tone: CardTone;
   notes?: string;
-}): Promise<{ message: string }> {
-  const userId = await requireUserId();
-  const contact = await ownContact(input.contactId, userId);
-  const message = await writeCardWords({
-    recipientName: contact.name,
-    group: toGroupKey(contact.group),
-    tone: input.tone,
-    notes: input.notes,
-  });
-  return { message };
+}): Promise<WordsResult> {
+  try {
+    const userId = await requireUserId();
+    const contact = await ownContact(input.contactId, userId);
+    const message = await writeCardWords({
+      recipientName: contact.name,
+      group: toGroupKey(contact.group),
+      tone: input.tone,
+      notes: input.notes,
+    });
+    return { ok: true, message };
+  } catch (err) {
+    console.error("[generateCardWordsForContact]", err);
+    return { ok: false, error: err instanceof Error ? err.message : "Couldn't write the words." };
+  }
 }
 
 /** Persist the finished card (words + whether to include the cartoon). */
