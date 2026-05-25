@@ -31,6 +31,8 @@ export interface OrgContext {
   ownerId: string;
   plan: string;
   subscriptionStatus: string | null;
+  stripeCustomerId: string | null;
+  currentPeriodEnd: Date | null;
   myUserId: string;
   myRole: OrgRole;
   isOwner: boolean;
@@ -88,6 +90,8 @@ export async function getOrgContext(userId: string): Promise<OrgContext | null> 
     ownerId: org.ownerId,
     plan: org.plan,
     subscriptionStatus: org.subscriptionStatus,
+    stripeCustomerId: org.stripeCustomerId,
+    currentPeriodEnd: org.currentPeriodEnd,
     myUserId: userId,
     myRole,
     isOwner: myRole === "OWNER",

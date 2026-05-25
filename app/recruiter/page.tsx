@@ -8,7 +8,7 @@ import { getOrgContext } from "@/lib/org";
 import { recruiterHasAccess } from "@/lib/recruiter-access";
 
 interface PageProps {
-  searchParams: Promise<{ role?: string; minScore?: string; segment?: string; q?: string }>;
+  searchParams: Promise<{ role?: string; minScore?: string; segment?: string; q?: string; upgraded?: string }>;
 }
 
 const SEGMENTS = ["SMB", "Mid-Market", "Enterprise", "PubSec", "Other"];
@@ -88,6 +88,7 @@ export default async function RecruiterSearchPage({ searchParams }: PageProps) {
             <span className="ml-2 text-xs font-bold tracking-widest text-gray-400 uppercase">Recruiter</span>
           </Link>
           <div className="flex items-center gap-4">
+            <Link href="/recruiter/upgrade" className="text-sm font-semibold text-gray-700 hover:text-[#0A66C2]">{hasAccess ? "Billing" : "Plans"}</Link>
             <span className="text-sm text-gray-500 hidden sm:inline">{me.name ?? me.email}</span>
             <form action={async () => { "use server"; await signOut({ redirectTo: "/" }); }}>
               <button type="submit" className="text-sm font-semibold text-gray-700 hover:text-[#0A66C2]">Sign out</button>
@@ -97,6 +98,11 @@ export default async function RecruiterSearchPage({ searchParams }: PageProps) {
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-10">
+        {sp.upgraded && (
+          <div className="mb-6 rounded-2xl border border-[#10B981]/30 bg-[#10B981]/5 px-5 py-4 text-sm font-semibold text-[#0F7A52]">
+            You're all set — your recruiter plan is active. Full profiles and contact details are unlocked below.
+          </div>
+        )}
         <div className="mb-8">
           <div className="text-xs tracking-widest font-bold text-[#0A66C2] uppercase mb-1">Verified rep search</div>
           <h1 className="text-3xl font-black tracking-tight">Find verified sales talent.</h1>
@@ -137,7 +143,7 @@ export default async function RecruiterSearchPage({ searchParams }: PageProps) {
               <div className="font-bold text-gray-900">You're previewing the talent pool.</div>
               <p className="text-sm text-gray-600">Scores are public; names, profiles, and contact details unlock with a recruiter plan.</p>
             </div>
-            <span className="text-sm font-semibold text-[#0A66C2] whitespace-nowrap">Upgrade coming soon</span>
+            <Link href="/recruiter/upgrade" className="text-sm font-bold text-white bg-[#0A66C2] hover:bg-[#1E5A9C] px-4 py-2.5 rounded-xl transition whitespace-nowrap">See plans</Link>
           </div>
         )}
 
