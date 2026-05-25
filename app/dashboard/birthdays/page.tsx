@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { BirthdaysClient } from "./BirthdaysClient";
 import { type BirthdayContactDTO, toGroupKey } from "@/lib/birthday";
+import { Logo } from "@/components/Logo";
 
 export default async function BirthdaysPage() {
   const session = await auth();
@@ -42,9 +43,8 @@ function BirthdaysHeader({ name }: { name: string }) {
   return (
     <header className="sticky top-0 z-50 bg-white/85 backdrop-blur border-b border-gray-100">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        <Link href="/dashboard" className="font-black text-xl tracking-tight">
-          <span className="text-[#3478C0]">Sales</span>
-          <span className="text-[#10B981]">Card</span>
+        <Link href="/dashboard">
+          <Logo className="text-xl" />
         </Link>
         <div className="flex items-center gap-4">
           <Link href="/dashboard" className="text-sm font-semibold text-gray-700 hover:text-[#3478C0]">

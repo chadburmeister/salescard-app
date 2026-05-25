@@ -1,12 +1,12 @@
 import { signIn } from "@/lib/auth";
+import { Logo } from "@/components/Logo";
 
 export default function SignInPage() {
   return (
     <main className="min-h-screen bg-white flex items-center justify-center p-6">
       <div className="max-w-md w-full text-center">
-        <h1 className="text-4xl font-black tracking-tight">
-          <span className="text-[#3478C0]">Sales</span>
-          <span className="text-[#10B981]">Card</span>
+        <h1 className="text-4xl">
+          <Logo />
         </h1>
         <p className="text-gray-600 mt-3 mb-10">
           Claim your verified sales record. Sign in with LinkedIn — we&apos;ll pre-fill your name, title, and company history.
