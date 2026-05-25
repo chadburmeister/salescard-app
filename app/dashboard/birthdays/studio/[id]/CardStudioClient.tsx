@@ -33,6 +33,31 @@ import {
 
 const ROSE_GRADIENT = "linear-gradient(135deg, #F43F5E, #FB923C)";
 
+// Shrink large photos in the browser before upload. Phone photos are often
+// 5-15 MB, well over the server's upload limit; this downscales to <=1280px and
+// re-encodes as JPEG (typically a few hundred KB). Returns null if the browser
+// can't process the file (e.g. HEIC), in which case we upload the original.
+async function downscaleImage(file: File, maxDim = 1280, quality = 0.85): Promise<Blob | null> {
+  if (typeof createImageBitmap !== "function" || typeof document === "undefined") return null;
+  try {
+    const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+    const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
+    const w = Math.max(1, Math.round(bitmap.width * scale));
+    const h = Math.max(1, Math.round(bitmap.height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(bitmap, 0, 0, w, h);
+    return await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob((b) => resolve(b), "image/jpeg", quality),
+    );
+  } catch {
+    return null;
+  }
+}
+
 interface StudioContact {
   id: string;
   name: string;
@@ -82,12 +107,35 @@ export function CardStudioClient({ contact }: { contact: StudioContact }) {
     setError(null);
     setUploading(true);
     try {
+      // Shrink big photos client-side so they fit under the upload size limit.
+      let blob: Blob = file;
+      let filename = file.name || "photo.jpg";
+      const small = await downscaleImage(file);
+      if (small && small.size < file.size) {
+        blob = small;
+        filename = "photo.jpg";
+      }
+
       const fd = new FormData();
-      fd.append("photo", file);
+      fd.append("photo", blob, filename);
       fd.append("contactId", contact.id);
+
       const res = await fetch("/api/birthday/upload-photo", { method: "POST", body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Upload failed.");
+      const raw = await res.text();
+      let data: { url?: string; error?: string } | null = null;
+      try {
+        data = raw ? (JSON.parse(raw) as { url?: string; error?: string }) : null;
+      } catch {
+        data = null;
+      }
+      if (!res.ok || !data?.url) {
+        const msg =
+          data?.error ||
+          (res.status === 413
+            ? "That photo is too large. Please pick one under about 4 MB."
+            : "Couldn't upload that photo. Try a different one.");
+        throw new Error(msg);
+      }
       setPhotoUrl(data.url);
       flash("Photo uploaded");
     } catch (err) {
