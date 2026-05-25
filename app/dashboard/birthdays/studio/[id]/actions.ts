@@ -31,6 +31,42 @@ const BLOCKED_TERMS = [
   "fetish", "lingerie", "gore", "bloody", "decapitat", "mutilat",
 ];
 
+// Abuse guardrails for AI image generation (each call costs money). Tunable via
+// env without a code change. "Original photo" is exempt (it makes no AI call).
+const IMAGE_DAILY_LIMIT = Number(process.env.IMAGE_DAILY_LIMIT || "2");
+const IMAGE_MONTHLY_LIMIT = Number(process.env.IMAGE_MONTHLY_LIMIT || "10");
+const IMAGE_MIN_INTERVAL_MS = Number(process.env.IMAGE_MIN_INTERVAL_SECONDS || "5") * 1000;
+
+async function enforceImageQuota(
+  userId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const now = Date.now();
+  const monthAgo = new Date(now - 30 * 24 * 60 * 60 * 1000);
+  const recent = await db.imageGenLog.findMany({
+    where: { userId, createdAt: { gte: monthAgo } },
+    orderBy: { createdAt: "desc" },
+    select: { createdAt: true },
+  });
+  if (recent.length >= IMAGE_MONTHLY_LIMIT) {
+    return {
+      ok: false,
+      error: `You've reached your monthly limit of ${IMAGE_MONTHLY_LIMIT} AI images. Choose "Original photo" (no limit) in the meantime.`,
+    };
+  }
+  const dayAgo = now - 24 * 60 * 60 * 1000;
+  const dayCount = recent.filter((r: { createdAt: Date }) => r.createdAt.getTime() >= dayAgo).length;
+  if (dayCount >= IMAGE_DAILY_LIMIT) {
+    return {
+      ok: false,
+      error: `You've reached today's limit of ${IMAGE_DAILY_LIMIT} AI images — it resets within 24 hours. Or choose "Original photo," which has no limit.`,
+    };
+  }
+  if (recent[0] && now - recent[0].createdAt.getTime() < IMAGE_MIN_INTERVAL_MS) {
+    return { ok: false, error: "Just a few seconds between images, please — try again in a moment." };
+  }
+  return { ok: true };
+}
+
 /** Generate (or regenerate) the cartoon for a contact and save it. */
 export async function generateCartoonForContact(input: {
   contactId: string;
@@ -70,6 +106,9 @@ export async function generateCartoonForContact(input: {
       }
     }
 
+    const quota = await enforceImageQuota(userId);
+    if (!quota.ok) return quota;
+
     const url = await generateCartoon({
       photoUrl: contact.photoUrl,
       style: input.style,
@@ -88,6 +127,7 @@ export async function generateCartoonForContact(input: {
       where: { contactId: input.contactId, status: "PENDING_APPROVAL" },
       data: { cartoonUrl: url },
     });
+    await db.imageGenLog.create({ data: { userId } });
     revalidatePath(`/dashboard/birthdays/studio/${input.contactId}`);
     revalidatePath("/dashboard/birthdays");
     return { ok: true, url };

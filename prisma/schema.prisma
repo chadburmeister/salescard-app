@@ -363,3 +363,16 @@ model BirthdayDispatch {
   @@index([status])
   @@index([userId])
 }
+
+// =================== AI image-generation guardrails ===================
+// One row per successful AI cartoon generation, used to rate-limit and cap
+// per-user usage so image costs stay predictable. "Original photo" makes no
+// AI call and is never logged here.
+
+model ImageGenLog {
+  id        String   @id @default(cuid())
+  userId    String
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
