@@ -40,10 +40,15 @@ function buildPrompt(style: string): string {
   ].join(" ");
 }
 
+interface GeminiInlineData {
+  data?: string;
+  mimeType?: string;   // REST responses use camelCase
+  mime_type?: string;  // requests / some shapes use snake_case
+}
 interface GeminiInlinePart {
   text?: string;
-  inlineData?: { data?: string; mimeType?: string };
-  inline_data?: { data?: string; mime_type?: string };
+  inlineData?: GeminiInlineData;
+  inline_data?: GeminiInlineData;
 }
 interface GeminiResponse {
   candidates?: Array<{ content?: { parts?: GeminiInlinePart[] } }>;
