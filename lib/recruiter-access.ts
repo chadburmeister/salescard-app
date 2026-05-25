@@ -6,6 +6,7 @@ import type { OrgContext } from "@/lib/org";
 
 const FOUNDER_COMP = ["chadburmeister@gmail.com"];
 const ACTIVE_STATUSES = new Set(["active", "trialing", "comp"]);
+const CHARTER_PLANS = new Set(["charter_annual", "charter_2yr"]);
 
 function compEmails(): string[] {
   const env = (process.env.RECRUITER_COMP_EMAILS || "")
@@ -21,12 +22,11 @@ export function recruiterHasAccess(
   org: OrgContext | null,
 ): boolean {
   if (email && compEmails().includes(email.toLowerCase())) return true;
-  if (org?.subscriptionStatus && ACTIVE_STATUSES.has(org.subscriptionStatus)) {
-    // For prepaid Charters (and as a backstop for subscriptions), respect the
-    // paid-through date. Active Stripe subscriptions always keep this in the
-    // future; a lapsed Charter falls out of access automatically.
-    if (!org.currentPeriodEnd) return true;
-    return org.currentPeriodEnd.getTime() > Date.now();
+  if (!org?.subscriptionStatus || !ACTIVE_STATUSES.has(org.subscriptionStatus)) return false;
+  // Charters are prepaid for a fixed term — enforce the paid-through date.
+  if (org.plan && CHARTER_PLANS.has(org.plan)) {
+    return !!org.currentPeriodEnd && org.currentPeriodEnd.getTime() > Date.now();
   }
-  return false;
+  // Recurring subscriptions: access for as long as Stripe reports active/trialing.
+  return true;
 }
