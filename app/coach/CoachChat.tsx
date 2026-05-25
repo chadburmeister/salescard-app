@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { Logo } from "@/components/Logo";
 
 type Msg = { role: "user" | "assistant"; content: string; hidden?: boolean };
 
@@ -77,10 +78,7 @@ export function CoachChat({ firstName }: { firstName: string }) {
       {/* top bar */}
       <header className="border-b border-gray-100 bg-white">
         <div className="max-w-3xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="font-black text-xl tracking-tight">
-            <span className="text-[#3478C0]">Sales</span>
-            <span className="text-[#10B981]">Card</span>
-          </div>
+          <Logo className="text-xl" />
           <Link href="/dashboard" className="text-sm text-gray-500 hover:text-gray-800">
             ← Dashboard
           </Link>
