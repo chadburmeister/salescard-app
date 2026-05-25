@@ -148,12 +148,12 @@ export function relativeDayLabel(daysUntil: number): string {
 // Cartoon styles (client-safe — labels only; prompts live in lib/cartoon.ts)
 // =========================================================================
 
-export type CartoonStyle = "cartoon" | "pixar" | "caricature" | "watercolor";
+export type CartoonStyle = "cartoon" | "pixar" | "original" | "watercolor";
 
 export const CARTOON_STYLES: { key: CartoonStyle; label: string }[] = [
   { key: "cartoon", label: "Friendly cartoon" },
   { key: "pixar", label: "Pixar-style 3D" },
-  { key: "caricature", label: "Caricature" },
+  { key: "original", label: "Original photo" },
   { key: "watercolor", label: "Watercolor" },
 ];
 

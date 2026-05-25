@@ -20,8 +20,6 @@ const STYLE_PROMPTS: Record<string, string> = {
     "a warm, friendly hand-illustrated cartoon greeting-card style with clean bold outlines and soft cheerful colors",
   pixar:
     "a glossy 3D animated-movie character style with soft studio lighting, big expressive eyes, cute and polished",
-  caricature:
-    "a playful caricature with gently exaggerated, good-natured features — lighthearted and fun, never unflattering",
   watercolor:
     "a soft watercolor painted portrait style with gentle washes, light texture, and a warm hand-painted feel",
 };

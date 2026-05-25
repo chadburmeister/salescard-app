@@ -43,6 +43,21 @@ export async function generateCartoonForContact(input: {
     const contact = await ownContact(input.contactId, userId);
     if (!contact.photoUrl) return { ok: false, error: "Upload a photo first." };
 
+    // "Original photo" — use the uploaded image as-is, no AI generation.
+    if (input.style === "original") {
+      await db.birthdayContact.update({
+        where: { id: input.contactId },
+        data: { cartoonUrl: contact.photoUrl, cartoonStyle: "original", includeCartoon: true },
+      });
+      await db.birthdayDispatch.updateMany({
+        where: { contactId: input.contactId, status: "PENDING_APPROVAL" },
+        data: { cartoonUrl: contact.photoUrl },
+      });
+      revalidatePath(`/dashboard/birthdays/studio/${input.contactId}`);
+      revalidatePath("/dashboard/birthdays");
+      return { ok: true, url: contact.photoUrl };
+    }
+
     const custom = (input.customPrompt || "").trim();
     if (input.scene === "custom") {
       if (!custom) return { ok: false, error: "Describe what you'd like the picture to be." };

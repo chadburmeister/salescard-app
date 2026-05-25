@@ -151,7 +151,7 @@ export function CardStudioClient({ contact }: { contact: StudioContact }) {
       setError("Upload a photo first.");
       return;
     }
-    if (scene === "custom" && !customDesc.trim()) {
+    if (scene === "custom" && style !== "original" && !customDesc.trim()) {
       setError("Describe what you'd like the picture to be.");
       return;
     }
@@ -334,6 +334,9 @@ export function CardStudioClient({ contact }: { contact: StudioContact }) {
                   </button>
                 ))}
               </div>
+              {style === "original" && (
+                <p className="mt-2 text-xs text-gray-400">Uses your uploaded photo as the card image — no AI changes.</p>
+              )}
               <button
                 type="button"
                 onClick={onGenerate}
@@ -348,7 +351,7 @@ export function CardStudioClient({ contact }: { contact: StudioContact }) {
                 ) : (
                   <Wand2 className="h-4 w-4" />
                 )}
-                {generating ? "Creating image…" : cartoonUrl ? "Regenerate image" : "Create image"}
+                {generating ? (style === "original" ? "Using photo…" : "Creating image…") : style === "original" ? "Use original photo" : cartoonUrl ? "Regenerate image" : "Create image"}
               </button>
               {!photoUrl && (
                 <p className="mt-2 text-xs text-gray-400">Upload a photo above to enable this.</p>
