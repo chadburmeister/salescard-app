@@ -74,7 +74,7 @@ export async function startCheckout(tier: RecruiterTier) {
     ...(def.mode === "subscription"
       ? { subscription_data: { metadata: { orgId: org.id, tier } } }
       : {}),
-    success_url: `${baseUrl()}/recruiter?upgraded=1`,
+    success_url: `${baseUrl()}/recruiter/upgrade/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${baseUrl()}/recruiter/upgrade?canceled=1`,
   });
 
