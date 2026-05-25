@@ -1,7 +1,4 @@
-"use client";
-
 import { tierFor } from "@/lib/tier";
-import { resolveCardBackground } from "@/lib/cardThemes";
 
 export interface SalesCardFrontProps {
   name: string;
@@ -12,7 +9,27 @@ export interface SalesCardFrontProps {
   themeId?: string | null;
   subGrades?: { PIPELINE: number; WIN_RATE: number; QUOTA: number; TENURE: number };
   certNo?: string;
+  openToRoles?: boolean;
   className?: string;
+}
+
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  const a = parts[0]?.[0] ?? "";
+  const b = parts.length > 1 ? parts[parts.length - 1][0] : "";
+  return (a + b).toUpperCase() || "S";
+}
+
+function slug(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
+function Tick({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
 }
 
 export function SalesCardFront({
@@ -21,150 +38,84 @@ export function SalesCardFront({
   score,
   linkedinHandle,
   photoUrl,
-  themeId,
   subGrades = { PIPELINE: 9.4, WIN_RATE: 9.0, QUOTA: 9.6, TENURE: 8.8 },
-  certNo,
+  openToRoles = false,
   className,
 }: SalesCardFrontProps) {
   const tier = tierFor(score);
-  const tierColor = `#${tier.color}`;
-  const tierTextOnBar = tier.textColorOn === "DARK" ? "#0F0F0F" : "#FFFFFF";
-  const cert = certNo ?? `00${String(score).padStart(2, "0")}9201`;
+  const initials = initialsOf(name);
   const handle = (linkedinHandle ?? slug(name)).replace(/^@/, "");
-  const linkedinUrl = `https://www.linkedin.com/in/${handle}`;
-  const clipId = `photoClip-${handle}`;
-  const bgImageId = `bgImage-${handle}`;
-  const currentYear = new Date().getFullYear();
-
-  const { theme, customImageUrl } = resolveCardBackground(themeId);
-  const photoZoneBg = theme?.photoBg ?? "#F5F7FB";
-  const photoZoneAccent = theme?.accent ?? tierColor;
+  const grades = [
+    { label: "Pipeline", value: subGrades.PIPELINE },
+    { label: "Win rate", value: subGrades.WIN_RATE },
+    { label: "Quota", value: subGrades.QUOTA },
+    { label: "Tenure", value: subGrades.TENURE },
+  ];
 
   return (
-    <svg
-      className={className}
-      viewBox="0 0 460 640"
-      xmlns="http://www.w3.org/2000/svg"
-      role="img"
-      aria-label={`SalesCard for ${name}, ${tier.name} ${score}`}
-    >
-      <defs>
-        <clipPath id={clipId}>
-          <circle cx="230" cy="365" r="104" />
-        </clipPath>
-        {customImageUrl ? (
-          <pattern id={bgImageId} patternUnits="userSpaceOnUse" x="30" y="220" width="400" height="290">
-            <image href={customImageUrl} x="0" y="0" width="400" height="290" preserveAspectRatio="xMidYMid slice" />
-          </pattern>
+    <div className={`bg-white border border-[#E2E2E2] rounded-xl overflow-hidden text-[#1B1F23] ${className ?? ""}`}>
+      <div className="relative h-20 bg-[#0A66C2]">
+        <span className="absolute top-2.5 right-4 text-white text-[13px] font-semibold">SalesCard</span>
+      </div>
+      <div className="px-[18px] pb-[18px]">
+        <div className="relative w-[90px] h-[90px] -mt-[46px]">
+          {photoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={photoUrl} alt={name} className="w-[90px] h-[90px] rounded-full object-cover border-[3px] border-white" />
+          ) : (
+            <div className="w-[90px] h-[90px] rounded-full bg-[#E8F0FE] border-[3px] border-white flex items-center justify-center text-[28px] font-semibold text-[#0A66C2]">
+              {initials}
+            </div>
+          )}
+          <div className="absolute right-0 bottom-1 w-[25px] h-[25px] rounded-full bg-[#0A66C2] border-2 border-white flex items-center justify-center text-white">
+            <Tick size={14} />
+          </div>
+        </div>
+
+        <div className="mt-2.5 flex items-center gap-1.5">
+          <span className="text-[21px] font-semibold leading-tight">{name}</span>
+          <span className="inline-flex items-center justify-center w-[18px] h-[18px] rounded-full bg-[#0A66C2] text-white shrink-0">
+            <Tick size={11} />
+          </span>
+        </div>
+        <div className="text-sm mt-0.5">{role}</div>
+        <div className="text-[13px] text-[#666666] mt-0.5">Verified sales record</div>
+
+        {openToRoles ? (
+          <div className="mt-2.5">
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#057642] bg-[#EAF5EE] border border-[#BFE0CC] px-2.5 py-1 rounded-full">
+              <span className="w-[7px] h-[7px] rounded-full bg-[#057642]" />
+              Open to roles
+            </span>
+          </div>
         ) : null}
-      </defs>
 
-      <rect x="0" y="0" width="460" height="640" rx="18" fill="#DDDCD3" stroke="#B8B6AC" strokeWidth="2" />
-      <rect x="14" y="14" width="432" height="612" rx="6" fill="#FFFFFF" stroke="#D0D0D0" strokeWidth="0.5" />
-      <rect x="14" y="14" width="432" height="9" fill={tierColor} />
-      <rect x="14" y="23" width="432" height="124" fill="#0F0F0F" />
+        <div className="border-t border-[#E2E2E2] -mx-[18px] mt-[15px]" />
 
-      <text x="30" y="44" fontFamily="Inter, system-ui, sans-serif" fontSize="11" fontWeight="700" fill="#F5B739" letterSpacing="0.5">
-        {currentYear} SALESCARD VERIFIED · SERIES 1
-      </text>
-      <text x="30" y="66" fontFamily="Inter, system-ui, sans-serif" fontSize="15" fontWeight="900" fill="#FFFFFF">
-        #SC {name.toUpperCase()}
-      </text>
+        <div className="flex items-center justify-between py-[13px]">
+          <div>
+            <div className="text-xs text-[#666666] font-semibold">SalesCard Score</div>
+            <div className="flex items-baseline gap-1 mt-0.5">
+              <span className="text-[38px] font-semibold leading-none">{score}</span>
+              <span className="text-[15px] text-[#666666]">/ 100</span>
+            </div>
+          </div>
+          <span className="text-xs font-semibold text-[#915907] bg-[#FBF3E3] border border-[#EBD9B5] px-3 py-[5px] rounded-full">
+            {tier.name}
+          </span>
+        </div>
 
-      <g fontFamily="Inter, system-ui, sans-serif" fontSize="11" fontWeight="700">
-        <text x="30" y="90" fill="#B8B8B8" letterSpacing="0.4">PIPELINE</text>
-        <text x="116" y="90" fill="#FFFFFF">{subGrades.PIPELINE.toFixed(1)}</text>
-        <text x="150" y="90" fill="#B8B8B8" letterSpacing="0.4">WIN RATE</text>
-        <text x="232" y="90" fill="#FFFFFF">{subGrades.WIN_RATE.toFixed(1)}</text>
-        <text x="30" y="112" fill="#B8B8B8" letterSpacing="0.4">QUOTA</text>
-        <text x="116" y="112" fill="#FFFFFF">{subGrades.QUOTA.toFixed(1)}</text>
-        <text x="150" y="112" fill="#B8B8B8" letterSpacing="0.4">TENURE</text>
-        <text x="232" y="112" fill="#FFFFFF">{subGrades.TENURE.toFixed(1)}</text>
-      </g>
-      <text x="30" y="136" fontFamily="JetBrains Mono, monospace" fontSize="10" fill="#888888">
-        {cert}
-      </text>
+        <div className="grid grid-cols-4 border-y border-[#E2E2E2]">
+          {grades.map((g, i) => (
+            <div key={g.label} className={`text-center py-[11px] ${i < 3 ? "border-r border-[#EEEEEE]" : ""}`}>
+              <div className="text-[17px] font-semibold">{g.value.toFixed(1)}</div>
+              <div className="text-[11px] text-[#666666]">{g.label}</div>
+            </div>
+          ))}
+        </div>
 
-      <rect x="285" y="34" width="78" height="102" fill={tierColor} />
-      <text x="324" y="84" fontFamily="Inter, system-ui, sans-serif" fontSize="38" fontWeight="900" fill={tierTextOnBar} textAnchor="middle">
-        {score}
-      </text>
-      <text x="324" y="116" fontFamily="Inter, system-ui, sans-serif" fontSize="9" fontWeight="900" fill={tierTextOnBar} textAnchor="middle" textLength="68" lengthAdjust="spacingAndGlyphs">
-        {tier.name.toUpperCase()}
-      </text>
-
-      <rect x="370" y="34" width="60" height="102" fill="#F5B739" />
-      <text x="400" y="58" fontFamily="Inter, system-ui, sans-serif" fontSize="9" fontWeight="900" fill="#0F0F0F" textAnchor="middle" letterSpacing="0.6">
-        VERIFIED
-      </text>
-      <text x="400" y="104" fontFamily="Inter, system-ui, sans-serif" fontSize="32" fontWeight="900" fill="#0F0F0F" textAnchor="middle">
-        10
-      </text>
-      <text x="400" y="126" fontFamily="Inter, system-ui, sans-serif" fontSize="7" fontWeight="900" fill="#0F0F0F" textAnchor="middle" letterSpacing="0.4">
-        GRADE
-      </text>
-
-      <text x="30" y="184" fontFamily="Inter, system-ui, sans-serif" fontSize="22" fontWeight="900">
-        <tspan fill="#3478C0">Sales</tspan>
-        <tspan fill={tierColor}>Card</tspan>
-      </text>
-      <text x="30" y="204" fontFamily="Inter, system-ui, sans-serif" fontSize="10" fontWeight="800" fill="#6B7280" letterSpacing="1.5">
-        CHROME · VERIFIED
-      </text>
-
-      <rect x="30" y="220" width="400" height="290" fill={customImageUrl ? `url(#${bgImageId})` : photoZoneBg} />
-      {!customImageUrl ? (
-        <>
-          <rect x="30" y="220" width="400" height="3" fill={photoZoneAccent} opacity="0.35" />
-          <rect x="30" y="507" width="400" height="3" fill={photoZoneAccent} opacity="0.35" />
-        </>
-      ) : null}
-
-      <circle cx="230" cy="365" r="112" fill={tierColor} />
-      <circle cx="230" cy="365" r="106" fill="#FFFFFF" />
-
-      {photoUrl ? (
-        <image
-          href={photoUrl}
-          x="125"
-          y="260"
-          width="210"
-          height="210"
-          preserveAspectRatio="xMidYMid slice"
-          clipPath={`url(#${clipId})`}
-        />
-      ) : (
-        <>
-          <circle cx="230" cy="365" r="104" fill="#E5E7EB" />
-          <circle cx="230" cy="338" r="32" fill="#9CA3AF" />
-          <path d="M 162 460 C 162 412, 196 388, 230 388 C 264 388, 298 412, 298 460 Z" fill="#9CA3AF" />
-        </>
-      )}
-
-      <a href={linkedinUrl} target="_blank" rel="noopener noreferrer">
-        <g transform="translate(30, 522)">
-          <rect width="20" height="20" rx="3" fill="#0A66C2" />
-          <text x="10" y="14" fontFamily="Inter, system-ui, sans-serif" fontSize="11" fontWeight="900" fill="white" textAnchor="middle">
-            in
-          </text>
-        </g>
-        <text x="60" y="538" fontFamily="Inter, system-ui, sans-serif" fontSize="14" fontWeight="600" fill="#1F2937" fontStyle="italic" style={{ textDecoration: "underline" }}>
-          linkedin.com/in/{handle}
-        </text>
-      </a>
-
-      <rect x="14" y="566" width="432" height="60" fill="#0F0F0F" />
-      <rect x="14" y="566" width="432" height="6" fill={tierColor} />
-      <text x="230" y="600" fontFamily="Inter, system-ui, sans-serif" fontSize="22" fontWeight="900" fill="#FFFFFF" textAnchor="middle">
-        {name.toUpperCase()}
-      </text>
-      <text x="230" y="618" fontFamily="Inter, system-ui, sans-serif" fontSize="11" fontWeight="900" fill="#F5B739" textAnchor="middle" letterSpacing="2">
-        {role.toUpperCase()}
-      </text>
-    </svg>
+        <div className="text-[12px] text-[#666666] pt-3">linkedin.com/in/{handle}</div>
+      </div>
+    </div>
   );
-}
-
-function slug(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }

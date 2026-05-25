@@ -8,7 +8,6 @@ import Link from "next/link";
 import { RequestVerificationDialog } from "./RequestVerificationDialog";
 import { ShareDialog } from "./ShareDialog";
 import { PhotoUploadDialog } from "./PhotoUploadDialog";
-import { CardThemeDialog } from "./CardThemeDialog";
 import { EditCompanyDialog } from "./EditCompanyDialog";
 import { DiscoverabilityToggle } from "./DiscoverabilityToggle";
 import { CardFlip } from "./CardFlip";
@@ -126,6 +125,7 @@ export function CardView({ user, card }: Props) {
                 linkedinHandle={linkedinHandleFor(user)}
                 themeId={card.cardBackground}
                 subGrades={computed.subGradesTenScale}
+                openToRoles={card.recruiterOptIn}
               />
             }
             back={
@@ -153,7 +153,6 @@ export function CardView({ user, card }: Props) {
               variant="button"
               buttonLabel="Change photo"
             />
-            <CardThemeDialog currentTheme={card.cardBackground} />
             <EditCompanyDialog currentCompany={user.currentCompany ?? null} />
           </div>
           <div className="mt-3 text-center text-sm text-gray-500">
