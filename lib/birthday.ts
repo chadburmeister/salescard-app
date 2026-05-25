@@ -188,3 +188,21 @@ export const CARTOON_SCENES: { key: CartoonScene; label: string }[] = [
 ];
 
 export const DEFAULT_CARTOON_SCENE: CartoonScene = "portrait";
+
+// =========================================================================
+// Unified "card look" — one picker that merges scene + art style into a
+// single mutually-exclusive choice (used by the Card Studio). Each look maps
+// to the underlying scene+style the generator already understands.
+// =========================================================================
+
+export type CardLook = "original" | "cartoon" | "silhouette" | "silhouette-cake" | "custom";
+
+export const CARD_LOOKS: { key: CardLook; label: string; scene: CartoonScene; style: CartoonStyle }[] = [
+  { key: "original",        label: "Original photo",    scene: "portrait",        style: "original" },
+  { key: "cartoon",         label: "Cartoon portrait",  scene: "portrait",        style: "cartoon" },
+  { key: "silhouette",      label: "Silhouette",        scene: "silhouette",      style: "cartoon" },
+  { key: "silhouette-cake", label: "Silhouette + cake", scene: "silhouette-cake", style: "cartoon" },
+  { key: "custom",          label: "Something else…",   scene: "custom",          style: "cartoon" },
+];
+
+export const DEFAULT_CARD_LOOK: CardLook = "cartoon";
