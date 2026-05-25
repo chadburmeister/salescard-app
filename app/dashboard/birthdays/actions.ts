@@ -11,9 +11,16 @@ import {
   toGroupKey,
   toGroupEnum,
   birthdayMessage,
-  formatBirthday,
   DEFAULT_GIFT_LABEL,
+  birthdayOccurrence,
+  todayInTz,
+  relativeDayLabel,
 } from "@/lib/birthday";
+import {
+  ensureDispatch,
+  sendApprovalEmailFor,
+  type ContactWithUser,
+} from "@/lib/birthday-dispatch";
 import type { BirthdayContact } from "@prisma/client";
 
 async function requireUserId(): Promise<string> {
@@ -135,26 +142,39 @@ export async function moveBirthdayContact(id: string, group: GroupKey): Promise<
 
 export async function sendApprovalDraft(id: string): Promise<{ ok: true; to: string }> {
   const userId = await requireUserId();
-  const [user, contact] = await Promise.all([
-    db.user.findUnique({ where: { id: userId } }),
-    db.birthdayContact.findFirst({ where: { id, userId } }),
-  ]);
-  if (!user) throw new Error("User not found.");
+  const contact = await db.birthdayContact.findFirst({
+    where: { id, userId },
+    include: { user: true },
+  });
   if (!contact) throw new Error("Contact not found.");
+  const user = contact.user;
 
+  // With a birthday on file, create/reuse the dispatch for the next occurrence
+  // and send the tokenized approval email — the same path the daily cron uses,
+  // so approving straight from this email actually schedules the send.
+  if (contact.birthday) {
+    const today = todayInTz(process.env.BIRTHDAY_TZ || "America/New_York");
+    const occ = birthdayOccurrence(contact.birthday, today);
+    const { dispatch } = await ensureDispatch(contact as ContactWithUser, occ.occYear);
+    await sendApprovalEmailFor(dispatch, contact as ContactWithUser, relativeDayLabel(occ.daysUntil));
+    revalidatePath("/dashboard/birthdays");
+    return { ok: true, to: user.email };
+  }
+
+  // No birthday on file yet — send a plain preview (nothing is scheduled). The
+  // CTA points back to the dashboard so the rep can add a date to enable auto-send.
   const groupKey = toGroupKey(contact.group);
   await sendBirthdayApprovalEmail({
     repEmail: user.email,
     repName: user.name ?? user.email,
     contactName: contact.name,
     contactEmail: contact.email,
-    birthdayLabel: formatBirthday(contact.birthday) || "their birthday",
+    birthdayLabel: "their birthday",
     group: GROUP_LABEL[groupKey],
     message: birthdayMessage(groupKey, contact.name),
     includeGift: contact.includeGift,
     includeCartoon: contact.includeCartoon,
     giftLabel: DEFAULT_GIFT_LABEL,
   });
-
   return { ok: true, to: user.email };
 }
