@@ -21,6 +21,12 @@ export function recruiterHasAccess(
   org: OrgContext | null,
 ): boolean {
   if (email && compEmails().includes(email.toLowerCase())) return true;
-  if (org?.subscriptionStatus && ACTIVE_STATUSES.has(org.subscriptionStatus)) return true;
+  if (org?.subscriptionStatus && ACTIVE_STATUSES.has(org.subscriptionStatus)) {
+    // For prepaid Charters (and as a backstop for subscriptions), respect the
+    // paid-through date. Active Stripe subscriptions always keep this in the
+    // future; a lapsed Charter falls out of access automatically.
+    if (!org.currentPeriodEnd) return true;
+    return org.currentPeriodEnd.getTime() > Date.now();
+  }
   return false;
 }
