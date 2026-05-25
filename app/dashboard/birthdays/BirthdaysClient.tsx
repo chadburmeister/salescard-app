@@ -3,7 +3,6 @@
 import { useRef, useState, type FormEvent, type ChangeEvent, type ComponentType } from "react";
 import {
   Cake,
-  Gift,
   Mail,
   Plus,
   Upload,
@@ -19,6 +18,7 @@ import {
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 import {
   type GroupKey,
   type BirthdayContactDTO,
@@ -27,7 +27,6 @@ import {
   formatBirthday,
   birthdayMonth,
   birthdayMessage,
-  DEFAULT_GIFT_LABEL,
 } from "@/lib/birthday";
 import {
   addBirthdayContact,
@@ -185,7 +184,7 @@ export function BirthdaysClient({
     }
   }
 
-  async function toggleOption(id: string, key: "includeGift" | "includeCartoon", value: boolean) {
+  async function toggleOption(id: string, key: "includeCartoon", value: boolean) {
     setContacts((prev) => prev.map((c) => (c.id === id ? { ...c, [key]: value } : c)));
     setPreview((p) => (p && p.id === id ? { ...p, [key]: value } : p));
     try {
@@ -382,6 +381,13 @@ export function BirthdaysClient({
                         <option value="personal">Personal</option>
                         <option value="family">Family</option>
                       </select>
+                      <Link
+                        href={`/dashboard/birthdays/studio/${c.id}`}
+                        className="hidden rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 ring-1 ring-rose-200 transition hover:bg-rose-50 sm:inline-block"
+                        title="Design the birthday card"
+                      >
+                        Card
+                      </Link>
                       <button
                         onClick={() => setPreview(c)}
                         className="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 ring-1 ring-rose-200 transition hover:bg-rose-50"
@@ -405,7 +411,7 @@ export function BirthdaysClient({
         </div>
 
         <p className="mt-4 text-center text-xs text-gray-400">
-          Phase 1 · Card, cartoon portrait &amp; gift card link. Daily auto-send and the gift catalog are coming next.
+          Approval-first · you approve every card before it sends. Design cartoon birthday cards in the Studio.
         </p>
       </div>
 
@@ -436,46 +442,44 @@ export function BirthdaysClient({
                 </div>
 
                 <div className="space-y-4 px-6 py-5">
-                  {preview.includeCartoon && (
+                  {preview.cartoonUrl ? (
+                    <div className="flex flex-col items-center">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={preview.cartoonUrl} alt="" className="h-28 w-28 rounded-2xl object-cover ring-2 ring-rose-100" />
+                      <p className="mt-2 text-xs text-gray-400">Cartoon birthday card</p>
+                    </div>
+                  ) : preview.includeCartoon ? (
                     <div className="flex flex-col items-center">
                       <div className="flex h-24 w-24 items-center justify-center rounded-full bg-rose-50 ring-2 ring-rose-100">
                         <Wand2 className="h-8 w-8 text-rose-400" />
                       </div>
-                      <p className="mt-2 text-xs text-gray-400">Cartoon portrait from uploaded photo</p>
+                      <p className="mt-2 text-xs text-gray-400">No cartoon yet — design one in the Card Studio</p>
                     </div>
-                  )}
+                  ) : null}
 
                   <p className="text-center text-sm leading-relaxed text-gray-700">
-                    {birthdayMessage(preview.group, preview.name)}
+                    {preview.cardMessage?.trim() || birthdayMessage(preview.group, preview.name)}
                   </p>
 
-                  {preview.includeGift && (
-                    <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3 ring-1 ring-gray-200">
-                      <span className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                        <Gift className="h-4 w-4 text-rose-500" /> {DEFAULT_GIFT_LABEL}
-                      </span>
-                      <span className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white" style={{ background: ROSE_GRADIENT }}>
-                        Redeem
-                      </span>
-                    </div>
-                  )}
                 </div>
               </div>
 
               <div className="mt-4 space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Include in this email</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Birthday card</p>
                 <OptionToggle
                   icon={ImageIcon}
-                  label="Cartoon portrait"
+                  label="Include cartoon portrait"
                   on={preview.includeCartoon}
                   onClick={() => toggleOption(preview.id, "includeCartoon", !preview.includeCartoon)}
                 />
-                <OptionToggle
-                  icon={Gift}
-                  label="Gift card link"
-                  on={preview.includeGift}
-                  onClick={() => toggleOption(preview.id, "includeGift", !preview.includeGift)}
-                />
+                <Link
+                  href={`/dashboard/birthdays/studio/${preview.id}`}
+                  className="flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
+                  style={{ background: ROSE_GRADIENT }}
+                >
+                  <Wand2 className="h-4 w-4" />
+                  {preview.cartoonUrl ? "Edit card in Studio" : "Design card in Studio"}
+                </Link>
               </div>
 
               <div className="mt-4 flex items-center gap-2 text-xs text-gray-500">

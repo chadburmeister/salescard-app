@@ -27,8 +27,11 @@ export default async function BirthdaysPage() {
     company: c.company,
     birthday: c.birthday ? c.birthday.toISOString() : null,
     group: toGroupKey(c.group),
-    includeGift: c.includeGift,
     includeCartoon: c.includeCartoon,
+    photoUrl: c.photoUrl,
+    cartoonUrl: c.cartoonUrl,
+    cardMessage: c.cardMessage,
+    cartoonStyle: c.cartoonStyle,
   }));
 
   return (

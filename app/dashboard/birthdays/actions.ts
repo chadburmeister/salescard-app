@@ -11,7 +11,6 @@ import {
   toGroupKey,
   toGroupEnum,
   birthdayMessage,
-  DEFAULT_GIFT_LABEL,
   birthdayOccurrence,
   todayInTz,
   relativeDayLabel,
@@ -37,8 +36,11 @@ function toDTO(c: BirthdayContact): BirthdayContactDTO {
     company: c.company,
     birthday: c.birthday ? c.birthday.toISOString() : null,
     group: toGroupKey(c.group),
-    includeGift: c.includeGift,
     includeCartoon: c.includeCartoon,
+    photoUrl: c.photoUrl,
+    cartoonUrl: c.cartoonUrl,
+    cardMessage: c.cardMessage,
+    cartoonStyle: c.cartoonStyle,
   };
 }
 
@@ -118,13 +120,12 @@ export async function removeBirthdayContact(id: string): Promise<void> {
 
 export async function updateBirthdayOptions(
   id: string,
-  opts: { includeGift?: boolean; includeCartoon?: boolean },
+  opts: { includeCartoon?: boolean },
 ): Promise<void> {
   const userId = await requireUserId();
   await db.birthdayContact.updateMany({
     where: { id, userId },
     data: {
-      ...(opts.includeGift !== undefined ? { includeGift: opts.includeGift } : {}),
       ...(opts.includeCartoon !== undefined ? { includeCartoon: opts.includeCartoon } : {}),
     },
   });
@@ -171,10 +172,8 @@ export async function sendApprovalDraft(id: string): Promise<{ ok: true; to: str
     contactEmail: contact.email,
     birthdayLabel: "their birthday",
     group: GROUP_LABEL[groupKey],
-    message: birthdayMessage(groupKey, contact.name),
-    includeGift: contact.includeGift,
-    includeCartoon: contact.includeCartoon,
-    giftLabel: DEFAULT_GIFT_LABEL,
+    message: contact.cardMessage?.trim() || birthdayMessage(groupKey, contact.name),
+    cartoonUrl: contact.cartoonUrl ?? undefined,
   });
   return { ok: true, to: user.email };
 }

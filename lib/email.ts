@@ -300,10 +300,8 @@ export interface BirthdayApprovalPayload {
   whenLabel?: string;        // "today" / "tomorrow" / "in 3 days"
   group: string;
   message: string;
-  includeGift: boolean;
-  includeCartoon: boolean;
-  giftLabel?: string;
   approveUrl?: string;       // tokenized /birthday/[token] page; falls back to dashboard
+  cartoonUrl?: string;       // generated cartoon to preview in the approval email
 }
 
 export async function sendBirthdayApprovalEmail(p: BirthdayApprovalPayload): Promise<void> {
@@ -312,10 +310,6 @@ export async function sendBirthdayApprovalEmail(p: BirthdayApprovalPayload): Pro
   const contactFirst = firstName(p.contactName);
   const when = p.whenLabel ? ` (${p.whenLabel})` : "";
   const subject = `Approve: birthday message for ${p.contactName} — ${p.birthdayLabel}${when}`;
-
-  const extras: string[] = [];
-  if (p.includeCartoon) extras.push("a cartoon portrait");
-  if (p.includeGift) extras.push(p.giftLabel || "a gift card");
 
   const whenSentence = p.whenLabel
     ? `${p.contactName}'s birthday is ${p.whenLabel} — ${p.birthdayLabel}.`
@@ -329,7 +323,7 @@ export async function sendBirthdayApprovalEmail(p: BirthdayApprovalPayload): Pro
     ``,
     `"${p.message}"`,
     ``,
-    extras.length ? `You've also marked this contact to receive ${extras.join(" and ")}.` : ``,
+    p.cartoonUrl ? `A cartoon birthday card is included with the message.` : ``,
     ``,
     `Nothing sends until you approve it. Review, edit, or approve here:`,
     primaryUrl,
@@ -338,6 +332,10 @@ export async function sendBirthdayApprovalEmail(p: BirthdayApprovalPayload): Pro
     ``,
     `— SalesCard Birthdays`,
   ].filter(Boolean).join("\n");
+
+  const cartoonBlock = p.cartoonUrl
+    ? `<div style="text-align:center;margin:2px 0 18px;"><img src="${p.cartoonUrl}" alt="Birthday cartoon for ${escapeHtml(contactFirst)}" style="max-width:260px;width:100%;border-radius:18px;border:1px solid #FBE4DD;" /></div>`
+    : "";
 
   const html = `<!doctype html><html><body style="margin:0;background:#F8FAFC;font-family:Arial,Helvetica,sans-serif;">
 <div style="max-width:520px;margin:0 auto;padding:24px;">
@@ -348,6 +346,7 @@ export async function sendBirthdayApprovalEmail(p: BirthdayApprovalPayload): Pro
       <div style="font-size:14px;opacity:.95;margin-top:2px;">${escapeHtml(p.birthdayLabel)}${p.whenLabel ? ` &middot; ${escapeHtml(p.whenLabel)}` : ""} &middot; ${escapeHtml(p.group)}</div>
     </div>
     <div style="padding:22px 24px;">
+      ${cartoonBlock}
       <p style="font-size:14.5px;color:#374151;margin:0 0 14px;">
         Hi ${escapeHtml(firstName(p.repName))} — ${escapeHtml(whenSentence)} Here's the message we'd like to send to
         <strong>${escapeHtml(p.contactName)}</strong> (${escapeHtml(p.contactEmail)}):
@@ -355,7 +354,6 @@ export async function sendBirthdayApprovalEmail(p: BirthdayApprovalPayload): Pro
       <div style="background:#F8FAFC;border:1px solid #E5E7EB;border-radius:12px;padding:16px;color:#111827;font-size:15px;line-height:1.5;">
         ${escapeHtml(p.message)}
       </div>
-      ${extras.length ? `<p style="font-size:13.5px;color:#6B7280;margin:14px 0 0;">You've also marked this contact to receive ${escapeHtml(extras.join(" and "))}.</p>` : ""}
       <div style="margin:22px 0 6px;text-align:center;">
         <a href="${primaryUrl}" style="display:inline-block;background:#10B981;color:white;font-weight:700;padding:12px 24px;border-radius:999px;text-decoration:none;">
           Review &amp; approve &rarr;
@@ -378,7 +376,7 @@ export async function sendBirthdayApprovalEmail(p: BirthdayApprovalPayload): Pro
 // =========================================================================
 // BIRTHDAY GREETING — the actual happy-birthday email sent to the recipient
 // on the day, after the rep approved it. Signed from the rep; replies go to
-// the rep so it feels personal.
+// the rep so it feels personal. Includes the cartoon card when one was made.
 // =========================================================================
 
 export interface BirthdayGreetingPayload {
@@ -387,6 +385,7 @@ export interface BirthdayGreetingPayload {
   repName: string;
   repEmail: string;
   message: string;
+  cartoonUrl?: string;
 }
 
 export async function sendBirthdayGreetingEmail(p: BirthdayGreetingPayload): Promise<void> {
@@ -400,15 +399,24 @@ export async function sendBirthdayGreetingEmail(p: BirthdayGreetingPayload): Pro
     `— ${p.repName}`,
   ].join("\n");
 
+  const hero = p.cartoonUrl
+    ? `<div style="padding:24px 24px 0;text-align:center;">
+         <img src="${p.cartoonUrl}" alt="Happy birthday, ${escapeHtml(recipientFirst)}" style="max-width:320px;width:100%;border-radius:20px;" />
+       </div>
+       <div style="text-align:center;padding:18px 24px 4px;">
+         <div style="font-size:26px;font-weight:800;letter-spacing:-0.01em;color:#F43F5E;">Happy Birthday, ${escapeHtml(recipientFirst)}!</div>
+       </div>`
+    : `<div style="background:linear-gradient(135deg,#F43F5E,#FB923C);padding:40px 24px 34px;text-align:center;color:#ffffff;">
+         <div style="font-size:40px;line-height:1;">🎂</div>
+         <div style="font-size:30px;font-weight:800;margin-top:12px;letter-spacing:-0.01em;">Happy Birthday,</div>
+         <div style="font-size:30px;font-weight:800;letter-spacing:-0.01em;">${escapeHtml(recipientFirst)}!</div>
+       </div>`;
+
   const html = `<!doctype html><html><body style="margin:0;background:#FFF7F5;font-family:Arial,Helvetica,sans-serif;">
 <div style="max-width:520px;margin:0 auto;padding:24px;">
   <div style="background:#ffffff;border:1px solid #FBE4DD;border-radius:20px;overflow:hidden;box-shadow:0 12px 30px rgba(244,63,94,0.10);">
-    <div style="background:linear-gradient(135deg,#F43F5E,#FB923C);padding:40px 24px 34px;text-align:center;color:#ffffff;">
-      <div style="font-size:40px;line-height:1;">🎂</div>
-      <div style="font-size:30px;font-weight:800;margin-top:12px;letter-spacing:-0.01em;">Happy Birthday,</div>
-      <div style="font-size:30px;font-weight:800;letter-spacing:-0.01em;">${escapeHtml(recipientFirst)}!</div>
-    </div>
-    <div style="padding:28px 28px 26px;">
+    ${hero}
+    <div style="padding:22px 28px 26px;">
       <p style="font-size:16px;line-height:1.6;color:#1F2937;margin:0;">
         ${messageHtml}
       </p>

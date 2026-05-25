@@ -12,7 +12,6 @@ import {
   toGroupKey,
   birthdayMessage,
   formatBirthday,
-  DEFAULT_GIFT_LABEL,
   APPROVAL_LEAD_DAYS,
   birthdayOccurrence,
   bdayDateForYear,
@@ -49,11 +48,10 @@ export async function ensureDispatch(
       contactId: contact.id,
       userId: contact.userId,
       year,
-      message: birthdayMessage(groupKey, contact.name),
+      message: contact.cardMessage?.trim() || birthdayMessage(groupKey, contact.name),
       group: contact.group,
-      includeGift: contact.includeGift,
       includeCartoon: contact.includeCartoon,
-      giftLabel: contact.includeGift ? DEFAULT_GIFT_LABEL : null,
+      cartoonUrl: contact.cartoonUrl,
       status: "PENDING_APPROVAL",
     },
   });
@@ -76,9 +74,7 @@ export async function sendApprovalEmailFor(
     whenLabel,
     group: GROUP_LABEL[groupKey],
     message: dispatch.message,
-    includeGift: dispatch.includeGift,
-    includeCartoon: dispatch.includeCartoon,
-    giftLabel: dispatch.giftLabel ?? DEFAULT_GIFT_LABEL,
+    cartoonUrl: dispatch.cartoonUrl ?? undefined,
     approveUrl: `${baseUrl()}/birthday/${dispatch.token}`,
   });
   await db.birthdayDispatch.update({
@@ -100,6 +96,7 @@ export async function sendGreetingFor(
       repName: contact.user.name ?? contact.user.email,
       repEmail: contact.user.email,
       message: dispatch.message,
+      cartoonUrl: dispatch.cartoonUrl ?? undefined,
     });
     await db.birthdayDispatch.update({
       where: { id: dispatch.id },

@@ -1,0 +1,362 @@
+"use client";
+
+import { useRef, useState, type ChangeEvent } from "react";
+import { useRouter } from "next/navigation";
+import {
+  Upload,
+  Wand2,
+  Sparkles,
+  Cake,
+  Loader2,
+  Check,
+  RefreshCw,
+} from "lucide-react";
+import {
+  CARTOON_STYLES,
+  CARD_TONES,
+  DEFAULT_CARTOON_STYLE,
+  DEFAULT_CARD_TONE,
+  firstName,
+  birthdayMessage,
+  type GroupKey,
+  type CartoonStyle,
+  type CardTone,
+} from "@/lib/birthday";
+import {
+  generateCartoonForContact,
+  generateCardWordsForContact,
+  saveCard,
+} from "./actions";
+
+const ROSE_GRADIENT = "linear-gradient(135deg, #F43F5E, #FB923C)";
+
+interface StudioContact {
+  id: string;
+  name: string;
+  email: string;
+  group: GroupKey;
+  groupLabel: string;
+  birthdayLabel: string | null;
+  photoUrl: string | null;
+  cartoonUrl: string | null;
+  cardMessage: string | null;
+  cartoonStyle: string | null;
+}
+
+export function CardStudioClient({ contact }: { contact: StudioContact }) {
+  const router = useRouter();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const first = firstName(contact.name);
+
+  const [photoUrl, setPhotoUrl] = useState<string | null>(contact.photoUrl);
+  const [cartoonUrl, setCartoonUrl] = useState<string | null>(contact.cartoonUrl);
+  const [style, setStyle] = useState<CartoonStyle>(
+    (contact.cartoonStyle as CartoonStyle) || DEFAULT_CARTOON_STYLE,
+  );
+  const [message, setMessage] = useState<string>(
+    contact.cardMessage?.trim() || birthdayMessage(contact.group, contact.name),
+  );
+  const [tone, setTone] = useState<CardTone>(DEFAULT_CARD_TONE);
+  const [notes, setNotes] = useState("");
+
+  const [uploading, setUploading] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [writing, setWriting] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+
+  function flash(msg: string) {
+    setToast(msg);
+    window.setTimeout(() => setToast(null), 2600);
+  }
+
+  async function onPickPhoto(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError(null);
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("photo", file);
+      fd.append("contactId", contact.id);
+      const res = await fetch("/api/birthday/upload-photo", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Upload failed.");
+      setPhotoUrl(data.url);
+      flash("Photo uploaded");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't upload that photo.");
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  async function onGenerate() {
+    if (!photoUrl) {
+      setError("Upload a photo first.");
+      return;
+    }
+    setError(null);
+    setGenerating(true);
+    try {
+      const res = await generateCartoonForContact(contact.id, style);
+      setCartoonUrl(res.url);
+      flash("Cartoon ready!");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't generate the cartoon.");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  async function onWrite() {
+    setError(null);
+    setWriting(true);
+    try {
+      const res = await generateCardWordsForContact({ contactId: contact.id, tone, notes });
+      setMessage(res.message);
+      flash("Words drafted");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't write the words.");
+    } finally {
+      setWriting(false);
+    }
+  }
+
+  async function onSave() {
+    setError(null);
+    setSaving(true);
+    try {
+      await saveCard(contact.id, { cardMessage: message, includeCartoon: !!cartoonUrl });
+      flash("Card saved");
+      router.push("/dashboard/birthdays");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't save the card.");
+      setSaving(false);
+    }
+  }
+
+  const stepNum =
+    "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white";
+
+  return (
+    <main className="min-h-screen" style={{ background: "#FFF7F5" }}>
+      <div className="mx-auto max-w-6xl px-6 py-10">
+        <div className="mb-8">
+          <div
+            className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide text-white"
+            style={{ background: ROSE_GRADIENT }}
+          >
+            <Sparkles className="h-3.5 w-3.5" /> Card Studio
+          </div>
+          <h1 className="mt-3 text-3xl font-black tracking-tight text-gray-900">
+            Design {first}&apos;s birthday card
+          </h1>
+          <p className="mt-1 text-gray-500">
+            {contact.groupLabel}
+            {contact.birthdayLabel ? ` · 🎂 ${contact.birthdayLabel}` : ""} · {contact.email}
+          </p>
+        </div>
+
+        {error && (
+          <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            {error}
+          </div>
+        )}
+
+        <div className="grid gap-8 lg:grid-cols-2">
+          {/* ---------------- Controls ---------------- */}
+          <div className="space-y-8">
+            {/* Step 1 — photo */}
+            <section>
+              <div className="mb-3 flex items-center gap-2">
+                <span className={stepNum} style={{ background: ROSE_GRADIENT }}>1</span>
+                <h2 className="text-lg font-bold text-gray-900">Upload a photo of {first}</h2>
+              </div>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={onPickPhoto}
+                className="hidden"
+              />
+              <div className="flex items-center gap-4">
+                <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-rose-100 bg-white">
+                  {photoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={photoUrl} alt="Source" className="h-full w-full object-cover" />
+                  ) : (
+                    <Upload className="h-7 w-7 text-rose-300" />
+                  )}
+                </div>
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => fileRef.current?.click()}
+                    disabled={uploading}
+                    className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-rose-600 ring-1 ring-rose-200 transition hover:bg-rose-50 disabled:opacity-60"
+                  >
+                    {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                    {photoUrl ? "Replace photo" : "Choose photo"}
+                  </button>
+                  <p className="mt-2 text-xs text-gray-400">A clear, front-facing photo works best. JPEG, PNG, or WebP, up to 8&nbsp;MB.</p>
+                </div>
+              </div>
+            </section>
+
+            {/* Step 2 — style + generate */}
+            <section>
+              <div className="mb-3 flex items-center gap-2">
+                <span className={stepNum} style={{ background: ROSE_GRADIENT }}>2</span>
+                <h2 className="text-lg font-bold text-gray-900">Pick a style &amp; create the cartoon</h2>
+              </div>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {CARTOON_STYLES.map((s) => (
+                  <button
+                    key={s.key}
+                    type="button"
+                    onClick={() => setStyle(s.key)}
+                    className={
+                      "rounded-xl border px-3 py-2.5 text-sm font-semibold transition " +
+                      (style === s.key
+                        ? "border-rose-400 bg-rose-50 text-rose-700 ring-2 ring-rose-100"
+                        : "border-gray-200 bg-white text-gray-600 hover:border-rose-200")
+                    }
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={onGenerate}
+                disabled={generating || !photoUrl}
+                className="mt-4 inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50"
+                style={{ background: ROSE_GRADIENT }}
+              >
+                {generating ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : cartoonUrl ? (
+                  <RefreshCw className="h-4 w-4" />
+                ) : (
+                  <Wand2 className="h-4 w-4" />
+                )}
+                {generating ? "Creating cartoon…" : cartoonUrl ? "Regenerate cartoon" : "Create cartoon"}
+              </button>
+              {!photoUrl && (
+                <p className="mt-2 text-xs text-gray-400">Upload a photo above to enable this.</p>
+              )}
+            </section>
+
+            {/* Step 3 — words */}
+            <section>
+              <div className="mb-3 flex items-center gap-2">
+                <span className={stepNum} style={{ background: ROSE_GRADIENT }}>3</span>
+                <h2 className="text-lg font-bold text-gray-900">Write the words</h2>
+              </div>
+
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">Tone</span>
+                {CARD_TONES.map((t) => (
+                  <button
+                    key={t.key}
+                    type="button"
+                    onClick={() => setTone(t.key)}
+                    className={
+                      "rounded-full px-3 py-1 text-xs font-semibold transition " +
+                      (tone === t.key
+                        ? "bg-rose-100 text-rose-700 ring-1 ring-rose-200"
+                        : "bg-white text-gray-500 ring-1 ring-gray-200 hover:bg-gray-50")
+                    }
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+
+              <input
+                type="text"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Optional: anything to mention? (e.g. just got promoted, loves golf)"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
+              />
+
+              <button
+                type="button"
+                onClick={onWrite}
+                disabled={writing}
+                className="mt-3 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-rose-600 ring-1 ring-rose-200 transition hover:bg-rose-50 disabled:opacity-60"
+              >
+                {writing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                {writing ? "Writing…" : "Write with AI"}
+              </button>
+
+              <textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                rows={5}
+                className="mt-3 w-full resize-y rounded-xl border border-gray-200 px-4 py-3 text-[15px] leading-relaxed text-gray-900 outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
+              />
+            </section>
+          </div>
+
+          {/* ---------------- Live preview ---------------- */}
+          <div className="lg:sticky lg:top-24 lg:self-start">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Live preview</p>
+            <div
+              className="overflow-hidden rounded-3xl border bg-white shadow-sm"
+              style={{ borderColor: "#FBE4DD" }}
+            >
+              {cartoonUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={cartoonUrl} alt="Cartoon preview" className="aspect-square w-full object-cover" />
+              ) : (
+                <div
+                  className="flex aspect-square w-full flex-col items-center justify-center text-white"
+                  style={{ background: ROSE_GRADIENT }}
+                >
+                  <Cake className="h-12 w-12" />
+                  <p className="mt-3 px-6 text-center text-sm text-rose-50">
+                    Your cartoon will appear here once you create it.
+                  </p>
+                </div>
+              )}
+              <div className="px-6 py-6">
+                <p className="text-center text-2xl font-black tracking-tight" style={{ color: "#F43F5E" }}>
+                  Happy Birthday, {first}!
+                </p>
+                <p className="mt-3 whitespace-pre-wrap text-center text-[15px] leading-relaxed text-gray-700">
+                  {message || "Your card message will appear here…"}
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={saving}
+              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60"
+              style={{ background: ROSE_GRADIENT }}
+            >
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+              {saving ? "Saving…" : "Save card to " + first}
+            </button>
+            <p className="mt-2 text-center text-xs text-gray-400">
+              This card is what {first} receives on their birthday — after you approve it.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-gray-900 px-5 py-2.5 text-sm font-medium text-white shadow-lg">
+          {toast}
+        </div>
+      )}
+    </main>
+  );
+}

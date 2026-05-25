@@ -26,9 +26,6 @@ export default async function BirthdayApprovalPage({ params }: PageProps) {
 
   const decided = dispatch.status !== "PENDING_APPROVAL";
 
-  const extras: string[] = [];
-  if (dispatch.includeCartoon) extras.push("a cartoon portrait");
-  if (dispatch.includeGift) extras.push(dispatch.giftLabel || "a gift card");
 
   return (
     <main className="min-h-screen" style={{ background: "#FFF7F5" }}>
@@ -70,6 +67,18 @@ export default async function BirthdayApprovalPage({ params }: PageProps) {
                 Review the message below. Nothing is sent until you approve it.
               </p>
 
+              {dispatch.cartoonUrl && (
+                <div className="mb-6 flex justify-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={dispatch.cartoonUrl}
+                    alt={`Cartoon birthday card for ${recipientFirst}`}
+                    className="w-full max-w-[280px] rounded-2xl border"
+                    style={{ borderColor: "#FBE4DD" }}
+                  />
+                </div>
+              )}
+
               {/* recipient summary */}
               <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 mb-6">
                 <div
@@ -94,9 +103,9 @@ export default async function BirthdayApprovalPage({ params }: PageProps) {
                 initialMessage={dispatch.message}
               />
 
-              {extras.length > 0 && (
+              {dispatch.includeCartoon && !dispatch.cartoonUrl && (
                 <p className="text-xs text-gray-400 text-center mt-4">
-                  You marked {recipientFirst} to also receive {extras.join(" and ")}.
+                  Want a cartoon on this card? Design one in the Card Studio before it sends.
                 </p>
               )}
             </>
