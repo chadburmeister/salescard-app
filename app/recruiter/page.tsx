@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { tierFor } from "@/lib/tier";
 import Link from "next/link";
 import type { Prisma, SalesRole } from "@prisma/client";
+import { getOrgContext } from "@/lib/org";
+import { recruiterHasAccess } from "@/lib/recruiter-access";
 
 interface PageProps {
   searchParams: Promise<{ role?: string; minScore?: string; segment?: string; q?: string }>;
@@ -42,6 +44,9 @@ export default async function RecruiterSearchPage({ searchParams }: PageProps) {
   const me = await db.user.findUnique({ where: { id: session.user.id } });
   if (!me) redirect("/sign-in");
   if (!me.isRecruiter) redirect("/dashboard");
+
+  const ctx = await getOrgContext(me.id);
+  const hasAccess = recruiterHasAccess(me.email, ctx);
 
   const sp = await searchParams;
   const role = sp.role || "";
@@ -126,6 +131,16 @@ export default async function RecruiterSearchPage({ searchParams }: PageProps) {
           </button>
         </form>
 
+        {!hasAccess && (
+          <div className="mb-6 rounded-2xl border border-[#0A66C2]/30 bg-[#0A66C2]/5 px-5 py-4 flex items-center justify-between gap-4">
+            <div>
+              <div className="font-bold text-gray-900">You're previewing the talent pool.</div>
+              <p className="text-sm text-gray-600">Scores are public; names, profiles, and contact details unlock with a recruiter plan.</p>
+            </div>
+            <span className="text-sm font-semibold text-[#0A66C2] whitespace-nowrap">Upgrade coming soon</span>
+          </div>
+        )}
+
         <div className="text-sm text-gray-500 mb-4">
           {cards.length} {cards.length === 1 ? "rep" : "reps"} found
         </div>
@@ -142,26 +157,23 @@ export default async function RecruiterSearchPage({ searchParams }: PageProps) {
               const name = u.name ?? u.email.split("@")[0];
               const score = card.score ?? 0;
               const tier = tierFor(score);
-              return (
-                <Link
-                  key={card.id}
-                  href={`/u/${card.username}`}
-                  className="bg-white border border-gray-200 rounded-2xl p-5 hover:shadow-lg hover:border-gray-300 transition flex flex-col gap-4"
-                >
+              const cardClasses = "bg-white border border-gray-200 rounded-2xl p-5 transition flex flex-col gap-4";
+              const body = (
+                <>
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-50 flex-shrink-0">
-                      {u.image ? (
+                      {hasAccess && u.image ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={u.image} alt={name} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-[#0A66C2] to-[#10B981] text-white font-black flex items-center justify-center text-sm">
-                          {getInitials(name)}
+                          {hasAccess ? getInitials(name) : ""}
                         </div>
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="font-black tracking-tight truncate">{name}</div>
-                      <div className="text-xs text-gray-500 truncate">{roleLabel(u.role)}{u.currentCompany ? ` · ${u.currentCompany}` : ""}</div>
+                      <div className="font-black tracking-tight truncate">{hasAccess ? name : `Verified ${roleLabel(u.role)}`}</div>
+                      <div className="text-xs text-gray-500 truncate">{hasAccess ? `${roleLabel(u.role)}${u.currentCompany ? ` · ${u.currentCompany}` : ""}` : "Verified record · upgrade to view"}</div>
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
@@ -176,9 +188,18 @@ export default async function RecruiterSearchPage({ searchParams }: PageProps) {
                         {tier.name}
                       </div>
                     </div>
-                    <span className="text-sm font-semibold text-[#0A66C2]">View card →</span>
+                    <span className="text-sm font-semibold text-[#0A66C2]">{hasAccess ? "View card →" : "Upgrade to view"}</span>
                   </div>
+                </>
+              );
+              return hasAccess ? (
+                <Link key={card.id} href={`/u/${card.username}`} className={`${cardClasses} hover:shadow-lg hover:border-gray-300`}>
+                  {body}
                 </Link>
+              ) : (
+                <div key={card.id} className={cardClasses} aria-disabled="true">
+                  {body}
+                </div>
               );
             })}
           </div>

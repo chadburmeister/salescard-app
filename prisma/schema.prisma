@@ -239,6 +239,13 @@ model Organization {
   ownerId     String                       // the User who created / owns billing
   seatLimit   Int      @default(5)         // max active members (owner counts as one)
   plan        String   @default("team")    // "solo" | "team" — informational for now
+
+  // Recruiter subscription (Stripe). null status = no active access.
+  subscriptionStatus   String?               // active | trialing | past_due | canceled | comp
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  currentPeriodEnd     DateTime?
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
