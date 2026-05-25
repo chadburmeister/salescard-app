@@ -381,7 +381,16 @@ export function BirthdaysClient({
               >
                 <Upload className="h-4 w-4" /> Upload spreadsheet (CSV or Excel)
               </button>
-              <p className="mt-2 text-center text-xs text-gray-400">Columns: name, email, birthday, company</p>
+              <p className="mt-2 text-center text-xs text-gray-400">
+                Columns: name, email, birthday, company ·{" "}
+                <a
+                  href="/birthday-contacts-template.xlsx"
+                  download
+                  className="font-semibold text-rose-600 hover:underline"
+                >
+                  Download a template
+                </a>
+              </p>
             </div>
 
             <div className="p-6 lg:col-span-3">
