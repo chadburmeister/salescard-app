@@ -59,8 +59,9 @@ function buildPrompt(opts: { scene: string; style: string; customPrompt?: string
 
   if (scene === "custom" && customPrompt && customPrompt.trim()) {
     return [
-      `Create a birthday greeting-card image featuring the person in this photo. The user's request: "${customPrompt.trim()}".`,
-      `Render it as ${stylePrompt(style)}, keeping their likeness recognizable.`,
+      `Illustrate a warm, fully-rendered birthday scene as ${stylePrompt(style)} — full color and detail, NOT a plain silhouette or outline.`,
+      `The scene to depict: ${customPrompt.trim()}.`,
+      "Make the person from the provided photo the clear main character with a recognizable, happy face; draw any other people as friendly, fully-illustrated background characters (not shadows).",
       CARD,
       SAFETY,
     ].join(" ");
