@@ -85,6 +85,33 @@ function parseCsv(text: string): { name: string; email: string; birthday: string
   return out;
 }
 
+// SheetJS (Excel reader) is loaded on demand from its CDN only when an .xlsx
+// file is chosen — keeps it out of the main bundle and adds no build dependency.
+type XLSXLib = {
+  read: (
+    data: Uint8Array,
+    opts: { type: "array"; cellDates?: boolean },
+  ) => { SheetNames: string[]; Sheets: Record<string, unknown> };
+  utils: { sheet_to_csv: (sheet: unknown) => string };
+};
+
+function loadXLSX(): Promise<XLSXLib> {
+  const existing = (window as unknown as { XLSX?: XLSXLib }).XLSX;
+  if (existing) return Promise.resolve(existing);
+  return new Promise<XLSXLib>((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js";
+    s.onload = () => {
+      const lib = (window as unknown as { XLSX?: XLSXLib }).XLSX;
+      if (lib) resolve(lib);
+      else reject(new Error("The Excel reader didn't load. Try again."));
+    };
+    s.onerror = () =>
+      reject(new Error("Couldn't load the Excel reader. Check your connection and try again."));
+    document.head.appendChild(s);
+  });
+}
+
 export function BirthdaysClient({
   initialContacts,
   repEmail,
@@ -143,7 +170,22 @@ export function BirthdaysClient({
     if (!file) return;
     setBusy(true);
     try {
-      const rows = parseCsv(await file.text());
+      const isExcel =
+        /\.xlsx?$/i.test(file.name) ||
+        file.type.includes("spreadsheetml") ||
+        file.type === "application/vnd.ms-excel";
+      let rows: ReturnType<typeof parseCsv>;
+      if (isExcel) {
+        const XLSX = await loadXLSX();
+        const wb = XLSX.read(new Uint8Array(await file.arrayBuffer()), {
+          type: "array",
+          cellDates: true,
+        });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        rows = parseCsv(sheet ? XLSX.utils.sheet_to_csv(sheet) : "");
+      } else {
+        rows = parseCsv(await file.text());
+      }
       if (!rows.length) {
         flash("No usable rows found in that file");
         return;
@@ -331,13 +373,13 @@ export function BirthdaysClient({
                 <span className="h-px flex-1 bg-gray-200" /> or <span className="h-px flex-1 bg-gray-200" />
               </div>
 
-              <input ref={fileRef} type="file" accept=".csv,text/csv" onChange={handleFile} className="hidden" />
+              <input ref={fileRef} type="file" accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" onChange={handleFile} className="hidden" />
               <button
                 onClick={() => fileRef.current?.click()}
                 disabled={busy}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-600 transition hover:border-rose-300 hover:text-rose-600 disabled:opacity-60"
               >
-                <Upload className="h-4 w-4" /> Upload spreadsheet (CSV)
+                <Upload className="h-4 w-4" /> Upload spreadsheet (CSV or Excel)
               </button>
               <p className="mt-2 text-center text-xs text-gray-400">Columns: name, email, birthday, company</p>
             </div>
