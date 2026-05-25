@@ -11,6 +11,7 @@ import { PhotoUploadDialog } from "./PhotoUploadDialog";
 import { CardThemeDialog } from "./CardThemeDialog";
 import { EditCompanyDialog } from "./EditCompanyDialog";
 import { DiscoverabilityToggle } from "./DiscoverabilityToggle";
+import { CardFlip } from "./CardFlip";
 
 interface Props {
   user: User;
@@ -114,86 +115,57 @@ export function CardView({ user, card }: Props) {
           </div>
         </div>
 
+        <div className="max-w-sm mx-auto">
+          <CardFlip
+            front={
+              <SalesCardFront
+                name={name}
+                role={roleLabel(role)}
+                score={score}
+                photoUrl={user.image ?? undefined}
+                linkedinHandle={linkedinHandleFor(user)}
+                themeId={card.cardBackground}
+                subGrades={computed.subGradesTenScale}
+              />
+            }
+            back={
+              <SalesCardBack
+                name={name}
+                role={roleLabel(role)}
+                score={score}
+                company={user.currentCompany ?? "—"}
+                segment="—"
+                region="—"
+                startedQuarter={sortedQuarters[0]?.period ?? "—"}
+                verifiedCount={verifiedCount}
+                totalCount={totalQuarters}
+                quarters={quarterRows}
+                totals={totals}
+                scoutReport={scoutReport}
+                percentileText={`TOP ${100 - (card.percentile ?? 50)}% ${roleLabel(role).toUpperCase()}`}
+              />
+            }
+          />
+          <div className="mt-5 flex justify-center gap-2 flex-wrap">
+            <PhotoUploadDialog
+              currentImage={user.image ?? null}
+              userName={name}
+              variant="button"
+              buttonLabel="Change photo"
+            />
+            <CardThemeDialog currentTheme={card.cardBackground} />
+            <EditCompanyDialog currentCompany={user.currentCompany ?? null} />
+          </div>
+          <div className="mt-3 text-center text-sm text-gray-500">
+            {verifiedCount}/{totalQuarters} quarters verified
+          </div>
+        </div>
+
         {card.verifications && card.verifications.length > 0 && (
           <VerificationStatusPanel verifications={card.verifications} />
         )}
 
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6 flex items-center gap-6 flex-wrap">
-          <div
-            className="w-20 h-20 rounded-full flex items-center justify-center text-white font-black text-3xl"
-            style={{ background: `#${tier.color}`, color: tier.textColorOn === "DARK" ? "#0F0F0F" : "#FFFFFF" }}
-          >
-            {score}
-          </div>
-          <div className="flex-1 min-w-[200px]">
-            <div className="text-xs tracking-widest font-bold text-gray-500 uppercase">SalesCard Score</div>
-            <div className="text-2xl font-black tracking-tight flex items-center gap-3 flex-wrap">
-              <span>{score} <span className="text-gray-400 font-bold text-base">/ 100</span></span>
-              <span className="px-3 py-1 rounded-full text-xs font-black tracking-widest"
-                    style={{ background: `#${tier.color}20`, color: `#${tier.color}` }}>
-                {tier.name.toUpperCase()}
-              </span>
-            </div>
-            <div className="text-sm text-gray-700 mt-1 italic">{tier.description}</div>
-            <div className="text-sm text-gray-500 mt-0.5">
-              {verifiedCount}/{totalQuarters} quarters verified · placeholder peer percentile (live percentile activates once we have enough peers)
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Card URL</div>
-            <code className="text-sm text-gray-700 bg-gray-100 px-2 py-1 rounded">app.salescard.ai/u/{card.username}</code>
-          </div>
-        </div>
-
         <DiscoverabilityToggle initialOptIn={card.recruiterOptIn} />
-
-        <div className="text-center text-sm font-bold tracking-widest text-gray-400 uppercase mb-6">
-          Your card · front + back
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          <div>
-            <div className="text-xs font-bold tracking-widest text-gray-400 mb-3 text-center">FRONT</div>
-            <SalesCardFront
-              name={name}
-              role={roleLabel(role)}
-              score={score}
-              photoUrl={user.image ?? undefined}
-              linkedinHandle={linkedinHandleFor(user)}
-              themeId={card.cardBackground}
-              subGrades={computed.subGradesTenScale}
-            />
-            <div className="mt-4 flex justify-center gap-2 flex-wrap">
-              <PhotoUploadDialog
-                currentImage={user.image ?? null}
-                userName={name}
-                variant="button"
-                buttonLabel="Change my card photo"
-              />
-              <CardThemeDialog currentTheme={card.cardBackground} />
-            </div>
-          </div>
-          <div>
-            <div className="text-xs font-bold tracking-widest text-gray-400 mb-3 text-center">BACK</div>
-            <SalesCardBack
-              name={name}
-              role={roleLabel(role)}
-              score={score}
-              company={user.currentCompany ?? "—"}
-              segment="—"
-              region="—"
-              startedQuarter={sortedQuarters[0]?.period ?? "—"}
-              verifiedCount={verifiedCount}
-              totalCount={totalQuarters}
-              quarters={quarterRows}
-              totals={totals}
-              scoutReport={scoutReport}
-              percentileText={`TOP ${100 - (card.percentile ?? 50)}% ${roleLabel(role).toUpperCase()}`}
-            />
-            <div className="mt-4 flex justify-center">
-              <EditCompanyDialog currentCompany={user.currentCompany ?? null} />
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
