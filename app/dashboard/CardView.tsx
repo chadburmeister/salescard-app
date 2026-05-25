@@ -120,6 +120,7 @@ export function CardView({ user, card }: Props) {
               <SalesCardFront
                 name={name}
                 role={roleLabel(role)}
+                company={user.currentCompany ?? "—"}
                 score={score}
                 photoUrl={user.image ?? undefined}
                 linkedinHandle={linkedinHandleFor(user)}

@@ -3,6 +3,7 @@ import { tierFor } from "@/lib/tier";
 export interface SalesCardFrontProps {
   name: string;
   role: string;
+  company?: string;
   score: number;
   linkedinHandle?: string;
   photoUrl?: string;
@@ -35,6 +36,7 @@ function Tick({ size = 16 }: { size?: number }) {
 export function SalesCardFront({
   name,
   role,
+  company,
   score,
   linkedinHandle,
   photoUrl,
@@ -45,6 +47,7 @@ export function SalesCardFront({
   const tier = tierFor(score);
   const initials = initialsOf(name);
   const handle = (linkedinHandle ?? slug(name)).replace(/^@/, "");
+  const companyLine = company && company !== "—" ? ` · ${company}` : "";
   const grades = [
     { label: "Pipeline", value: subGrades.PIPELINE },
     { label: "Win rate", value: subGrades.WIN_RATE },
@@ -75,7 +78,7 @@ export function SalesCardFront({
         <div className="mt-2.5 flex items-center gap-1.5">
           <span className="text-[21px] font-semibold leading-tight">{name}</span>
         </div>
-        <div className="text-sm mt-0.5">{role}</div>
+        <div className="text-sm mt-0.5">{role}{companyLine}</div>
         <div className="text-[13px] text-[#666666] mt-0.5">Verified sales record</div>
 
         {openToRoles ? (
