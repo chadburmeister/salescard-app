@@ -42,7 +42,7 @@ export const RECRUITER_TIERS: Record<RecruiterTier, RecruiterTierDef> = {
   basic: {
     tier: "basic",
     name: "Basic",
-    priceId: process.env.STRIPE_PRICE_BASIC || "price_1Tb7581pt6fn1tgaxAj3jFRr",
+    priceId: process.env.STRIPE_PRICE_BASIC || "price_1Tb7ew0WI9vMRvvPYNpc9QnQ",
     mode: "subscription",
     seats: 1,
     termMonths: null,
@@ -60,7 +60,7 @@ export const RECRUITER_TIERS: Record<RecruiterTier, RecruiterTierDef> = {
   pro: {
     tier: "pro",
     name: "Pro",
-    priceId: process.env.STRIPE_PRICE_PRO || "price_1Tb75q1pt6fn1tga91bZ1Jyf",
+    priceId: process.env.STRIPE_PRICE_PRO || "price_1Tb7et0WI9vMRvvPUFNLia8l",
     mode: "subscription",
     seats: 3,
     termMonths: null,
@@ -80,7 +80,7 @@ export const RECRUITER_TIERS: Record<RecruiterTier, RecruiterTierDef> = {
   charter_annual: {
     tier: "charter_annual",
     name: "Charter — 1 year",
-    priceId: process.env.STRIPE_PRICE_CHARTER_ANNUAL || "price_1Tb76g1pt6fn1tga0De125A9",
+    priceId: process.env.STRIPE_PRICE_CHARTER_ANNUAL || "price_1Tb7ew0WI9vMRvvPlks1EaH3",
     mode: "payment",
     seats: 3,
     termMonths: 12,
@@ -99,7 +99,7 @@ export const RECRUITER_TIERS: Record<RecruiterTier, RecruiterTierDef> = {
   charter_2yr: {
     tier: "charter_2yr",
     name: "Charter — 2 years",
-    priceId: process.env.STRIPE_PRICE_CHARTER_2YR || "price_1Tb78b1pt6fn1tga9uhcwmw2",
+    priceId: process.env.STRIPE_PRICE_CHARTER_2YR || "price_1Tb7et0WI9vMRvvP7zY5GZYY",
     mode: "payment",
     seats: 3,
     termMonths: 24,
