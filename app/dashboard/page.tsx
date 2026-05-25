@@ -5,6 +5,7 @@ import { currentPeriods } from "@/lib/quarters";
 import { KpiForm } from "./KpiForm";
 import { CardView } from "./CardView";
 import Link from "next/link";
+import { Logo } from "@/components/Logo";
 export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user?.id) {
@@ -67,9 +68,8 @@ function DashboardHeader({ name, isRecruiter }: { name: string; isRecruiter?: bo
   return (
     <header className="sticky top-0 z-50 bg-white/85 backdrop-blur border-b border-gray-100">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        <Link href="/dashboard" className="font-black text-xl tracking-tight">
-          <span className="text-[#3478C0]">Sales</span>
-          <span className="text-[#10B981]">Card</span>
+        <Link href="/dashboard">
+          <Logo className="text-xl" />
         </Link>
         <div className="flex items-center gap-4">
           <Link href="/coach" className="text-sm font-semibold text-gray-700 hover:text-[#3478C0]">
