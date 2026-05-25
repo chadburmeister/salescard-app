@@ -99,7 +99,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
       <div className="max-w-4xl mx-auto px-6 py-12">
         <div className="text-center mb-10">
           <Link href="/" className="font-black text-xl tracking-tight">
-            <span className="text-[#3478C0]">Sales</span>
+            <span className="text-[#0A66C2]">Sales</span>
             <span className="text-[#10B981]">Card</span>
           </Link>
         </div>
@@ -110,7 +110,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
               // eslint-disable-next-line @next/next/no-img-element
               <img src={user.image} alt={name} className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-[#3478C0] to-[#10B981] text-white font-black flex items-center justify-center text-3xl">
+              <div className="w-full h-full bg-gradient-to-br from-[#0A66C2] to-[#10B981] text-white font-black flex items-center justify-center text-3xl">
                 {getInitials(name)}
               </div>
             )}
@@ -157,7 +157,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
 
         <div className="text-center text-sm text-gray-500 mt-12">
           This is <strong>{name}</strong>&apos;s public SalesCard.{" "}
-          <Link href="/sign-in" className="text-[#3478C0] hover:underline">Claim your own →</Link>
+          <Link href="/sign-in" className="text-[#0A66C2] hover:underline">Claim your own →</Link>
         </div>
       </div>
     </main>

@@ -50,13 +50,13 @@ function BirthdaysHeader({ name }: { name: string }) {
           <Logo className="text-xl" />
         </Link>
         <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="text-sm font-semibold text-gray-700 hover:text-[#3478C0]">
+          <Link href="/dashboard" className="text-sm font-semibold text-gray-700 hover:text-[#0A66C2]">
             My Card
           </Link>
           <span className="text-sm font-semibold text-rose-600">Birthdays</span>
           <span className="text-sm text-gray-500 hidden sm:inline">{name}</span>
           <form action={async () => { "use server"; await signOut({ redirectTo: "/" }); }}>
-            <button type="submit" className="text-sm font-semibold text-gray-700 hover:text-[#3478C0]">
+            <button type="submit" className="text-sm font-semibold text-gray-700 hover:text-[#0A66C2]">
               Sign out
             </button>
           </form>

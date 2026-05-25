@@ -42,7 +42,7 @@ export function PhotoUploadDialog({
         <button
           type="button"
           onClick={openDialog}
-          className="inline-flex items-center gap-2 text-[#3478C0] hover:text-[#1E5A9C] hover:bg-blue-50 font-semibold text-sm px-4 py-2 rounded-full transition"
+          className="inline-flex items-center gap-2 text-[#0A66C2] hover:text-[#1E5A9C] hover:bg-blue-50 font-semibold text-sm px-4 py-2 rounded-full transition"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
@@ -54,14 +54,14 @@ export function PhotoUploadDialog({
         <button
           type="button"
           onClick={openDialog}
-          className="group relative w-12 h-12 rounded-full overflow-hidden ring-2 ring-white shadow-sm hover:ring-[#3478C0] transition"
+          className="group relative w-12 h-12 rounded-full overflow-hidden ring-2 ring-white shadow-sm hover:ring-[#0A66C2] transition"
           aria-label="Update profile photo"
         >
           {currentImage ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={currentImage} alt={userName} className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-[#3478C0] to-[#10B981] text-white font-black flex items-center justify-center text-sm">
+            <div className="w-full h-full bg-gradient-to-br from-[#0A66C2] to-[#10B981] text-white font-black flex items-center justify-center text-sm">
               {initials}
             </div>
           )}
@@ -94,7 +94,7 @@ export function PhotoUploadDialog({
               </svg>
             </button>
 
-            <div className="text-xs tracking-widest font-bold text-[#3478C0] uppercase mb-1">Your photo</div>
+            <div className="text-xs tracking-widest font-bold text-[#0A66C2] uppercase mb-1">Your photo</div>
             <h2 className="text-2xl font-black tracking-tight mb-1">Profile photo</h2>
             <p className="text-sm text-gray-600 mb-6">
               Your card photo is pulled from your LinkedIn profile. Re-import to refresh it.
@@ -106,7 +106,7 @@ export function PhotoUploadDialog({
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={currentImage} alt={userName} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-[#3478C0] to-[#10B981] text-white font-black flex items-center justify-center text-4xl">
+                  <div className="w-full h-full bg-gradient-to-br from-[#0A66C2] to-[#10B981] text-white font-black flex items-center justify-center text-4xl">
                     {initials}
                   </div>
                 )}

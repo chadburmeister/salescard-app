@@ -89,7 +89,7 @@ export function CardView({ user, card }: Props) {
           <div className="flex items-center gap-4">
             <PhotoUploadDialog currentImage={user.image ?? null} userName={name} />
             <div>
-              <div className="text-xs tracking-widest font-bold text-[#3478C0] uppercase mb-1">Your SalesCard</div>
+              <div className="text-xs tracking-widest font-bold text-[#0A66C2] uppercase mb-1">Your SalesCard</div>
               <h1 className="text-3xl font-black tracking-tight">Welcome back, {firstName(name)}.</h1>
             </div>
           </div>

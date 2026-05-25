@@ -18,7 +18,7 @@ export function Logo({
   return (
     <span
       className={`inline-flex items-center font-extrabold tracking-tight leading-none ${className ?? ""}`}
-      style={{ fontFamily: "'Helvetica Neue', Arial, sans-serif" }}
+      style={{ fontFamily: "var(--font-inter), 'Helvetica Neue', Arial, sans-serif" }}
     >
       <span style={{ color: wordColor }}>Sales</span>
       <span

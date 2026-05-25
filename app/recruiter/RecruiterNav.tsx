@@ -30,7 +30,7 @@ export function RecruiterNav({ orgName, hasOrg }: Props) {
       <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
           <Link href="/recruiter" className="font-black tracking-tight whitespace-nowrap">
-            <span className="text-[#3478C0]">Sales</span>
+            <span className="text-[#0A66C2]">Sales</span>
             <span className="text-[#10B981]">Card</span>
             <span className="text-gray-400 font-bold"> · Recruiter</span>
           </Link>

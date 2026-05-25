@@ -64,7 +64,7 @@ export const CARD_THEMES: CardTheme[] = [
     key: "midnight",
     name: "Midnight",
     bgFill: "#1A1A1A",
-    accentLine: "#3478C0",
+    accentLine: "#0A66C2",
     silhouetteBg: "#2A2A2A",
     silhouetteFg: "#6B7280",
     swatch: "#1A1A1A",

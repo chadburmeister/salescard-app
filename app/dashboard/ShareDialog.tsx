@@ -112,7 +112,7 @@ export function ShareDialog({
               </svg>
             </button>
 
-            <div className="text-xs tracking-widest font-bold text-[#3478C0] uppercase mb-1">
+            <div className="text-xs tracking-widest font-bold text-[#0A66C2] uppercase mb-1">
               Put your numbers in front of recruiters
             </div>
             <h2 className="text-2xl font-black tracking-tight mb-2">Share your SalesCard.</h2>
@@ -127,7 +127,7 @@ export function ShareDialog({
                 <button
                   type="button"
                   onClick={() => copyTo(caption, "caption")}
-                  className="text-xs font-bold text-[#3478C0] hover:underline"
+                  className="text-xs font-bold text-[#0A66C2] hover:underline"
                 >
                   {copied === "caption" ? "Copied!" : "Copy"}
                 </button>
@@ -137,7 +137,7 @@ export function ShareDialog({
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
                 rows={11}
-                className="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm leading-relaxed focus:outline-none focus:border-[#3478C0] bg-white resize-y"
+                className="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm leading-relaxed focus:outline-none focus:border-[#0A66C2] bg-white resize-y"
               />
             </label>
 
@@ -147,7 +147,7 @@ export function ShareDialog({
               <button
                 type="button"
                 onClick={() => copyTo(url, "url")}
-                className="text-xs font-bold text-[#3478C0] hover:underline whitespace-nowrap"
+                className="text-xs font-bold text-[#0A66C2] hover:underline whitespace-nowrap"
               >
                 {copied === "url" ? "Copied!" : "Copy URL"}
               </button>

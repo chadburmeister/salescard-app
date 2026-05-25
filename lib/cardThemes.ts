@@ -22,7 +22,7 @@ export const CARD_BACKGROUND_THEMES: CardBackgroundTheme[] = [
     name: "Stadium",
     description: "Classic, clean white-on-cream.",
     photoBg: "#F5F7FB",
-    accent: "#3478C0",
+    accent: "#0A66C2",
     textOnBg: "DARK",
   },
   {
@@ -62,7 +62,7 @@ export const CARD_BACKGROUND_THEMES: CardBackgroundTheme[] = [
     name: "Frost",
     description: "Icy blue-silver palette.",
     photoBg: "#E8F0F5",
-    accent: "#3478C0",
+    accent: "#0A66C2",
     textOnBg: "DARK",
   },
 ];

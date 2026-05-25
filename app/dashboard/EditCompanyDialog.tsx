@@ -49,7 +49,7 @@ export function EditCompanyDialog({ currentCompany }: Props) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 text-[#3478C0] hover:text-[#1E5A9C] hover:bg-blue-50 font-semibold text-sm px-4 py-2 rounded-full transition"
+        className="inline-flex items-center gap-2 text-[#0A66C2] hover:text-[#1E5A9C] hover:bg-blue-50 font-semibold text-sm px-4 py-2 rounded-full transition"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 21h18" />
@@ -82,7 +82,7 @@ export function EditCompanyDialog({ currentCompany }: Props) {
               </svg>
             </button>
 
-            <div className="text-xs tracking-widest font-bold text-[#3478C0] uppercase mb-1">Your profile</div>
+            <div className="text-xs tracking-widest font-bold text-[#0A66C2] uppercase mb-1">Your profile</div>
             <h2 className="text-2xl font-black tracking-tight mb-1">Current company</h2>
             <p className="text-sm text-gray-600 mb-5">
               Shown on the back of your card. Leave blank to hide.
@@ -102,7 +102,7 @@ export function EditCompanyDialog({ currentCompany }: Props) {
                 placeholder="e.g. Acme Inc."
                 autoFocus
                 maxLength={200}
-                className="w-full rounded-xl border border-gray-300 px-4 py-3 text-base focus:outline-none focus:border-[#3478C0] bg-white"
+                className="w-full rounded-xl border border-gray-300 px-4 py-3 text-base focus:outline-none focus:border-[#0A66C2] bg-white"
               />
             </label>
 
@@ -125,7 +125,7 @@ export function EditCompanyDialog({ currentCompany }: Props) {
                 type="button"
                 onClick={handleSave}
                 disabled={isPending}
-                className="inline-flex items-center gap-2 bg-[#3478C0] hover:bg-[#1E5A9C] disabled:opacity-60 text-white font-bold px-6 py-2.5 rounded-full transition"
+                className="inline-flex items-center gap-2 bg-[#0A66C2] hover:bg-[#1E5A9C] disabled:opacity-60 text-white font-bold px-6 py-2.5 rounded-full transition"
               >
                 {isPending ? "Saving…" : "Save"}
               </button>

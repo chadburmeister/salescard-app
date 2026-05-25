@@ -88,7 +88,7 @@ export function CoachChat({ firstName }: { firstName: string }) {
       {!started ? (
         // ---------- INTRO ----------
         <main className="max-w-3xl mx-auto px-6 py-12 w-full">
-          <span className="inline-block bg-[#e8f1fb] text-[#3478C0] font-bold text-xs tracking-widest uppercase px-3 py-1.5 rounded-full mb-5">
+          <span className="inline-block bg-[#e8f1fb] text-[#0A66C2] font-bold text-xs tracking-widest uppercase px-3 py-1.5 rounded-full mb-5">
             Goals Coach
           </span>
           <h1 className="text-4xl font-black tracking-tight leading-tight mb-3">
@@ -128,7 +128,7 @@ export function CoachChat({ firstName }: { firstName: string }) {
             <button
               type="button"
               onClick={start}
-              className="inline-flex items-center bg-[#3478C0] text-white font-bold text-base px-7 py-3.5 rounded-full hover:bg-[#2d68a8] transition-colors"
+              className="inline-flex items-center bg-[#0A66C2] text-white font-bold text-base px-7 py-3.5 rounded-full hover:bg-[#004182] transition-colors"
             >
               Start with Skip
             </button>
@@ -148,7 +148,7 @@ export function CoachChat({ firstName }: { firstName: string }) {
                   <div
                     className={
                       m.role === "user"
-                        ? "max-w-[80%] bg-[#3478C0] text-white rounded-2xl rounded-br-md px-4 py-3 text-[15px] leading-relaxed whitespace-pre-wrap"
+                        ? "max-w-[80%] bg-[#0A66C2] text-white rounded-2xl rounded-br-md px-4 py-3 text-[15px] leading-relaxed whitespace-pre-wrap"
                         : "max-w-[80%] bg-white border border-gray-200 rounded-2xl rounded-bl-md px-4 py-3 text-[15px] leading-relaxed whitespace-pre-wrap"
                     }
                   >
@@ -187,12 +187,12 @@ export function CoachChat({ firstName }: { firstName: string }) {
                 onKeyDown={onKeyDown}
                 rows={1}
                 placeholder="Type your answer…"
-                className="flex-1 resize-none rounded-2xl border border-gray-300 px-4 py-3 text-[15px] leading-relaxed focus:outline-none focus:border-[#3478C0] focus:ring-1 focus:ring-[#3478C0] max-h-40"
+                className="flex-1 resize-none rounded-2xl border border-gray-300 px-4 py-3 text-[15px] leading-relaxed focus:outline-none focus:border-[#0A66C2] focus:ring-1 focus:ring-[#0A66C2] max-h-40"
               />
               <button
                 type="submit"
                 disabled={loading || !input.trim()}
-                className="bg-[#3478C0] text-white font-bold px-5 py-3 rounded-full hover:bg-[#2d68a8] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="bg-[#0A66C2] text-white font-bold px-5 py-3 rounded-full hover:bg-[#004182] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Send
               </button>

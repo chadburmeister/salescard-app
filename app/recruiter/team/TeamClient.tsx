@@ -60,7 +60,7 @@ function CreateTeam() {
   return (
     <div className="max-w-lg mx-auto px-6 py-16">
       <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
-        <div className="text-xs tracking-widest font-bold text-[#3478C0] uppercase mb-2">
+        <div className="text-xs tracking-widest font-bold text-[#0A66C2] uppercase mb-2">
           Recruiter teams
         </div>
         <h1 className="text-2xl font-black tracking-tight mb-2">Create your team</h1>
@@ -78,7 +78,7 @@ function CreateTeam() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Acme Talent Partners"
-              className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#3478C0]"
+              className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
             />
           </div>
           {err && <p className="text-sm text-red-600">{err}</p>}
@@ -161,7 +161,7 @@ function ManageTeam({ data }: { data: TeamData }) {
     <div className="max-w-3xl mx-auto px-6 py-12">
       {/* Header */}
       <div className="mb-8">
-        <div className="text-xs tracking-widest font-bold text-[#3478C0] uppercase mb-1">
+        <div className="text-xs tracking-widest font-bold text-[#0A66C2] uppercase mb-1">
           Team
         </div>
         <h1 className="text-3xl font-black tracking-tight">{data.name}</h1>
@@ -204,12 +204,12 @@ function ManageTeam({ data }: { data: TeamData }) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="teammate@company.com"
-              className="flex-1 border border-gray-300 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#3478C0]"
+              className="flex-1 border border-gray-300 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
             />
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as "MEMBER" | "ADMIN")}
-              className="border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#3478C0]"
+              className="border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
             >
               <option value="MEMBER">Member</option>
               <option value="ADMIN">Admin</option>
@@ -299,7 +299,7 @@ function ManageTeam({ data }: { data: TeamData }) {
                   </code>
                   <button
                     onClick={() => copy(i.joinUrl)}
-                    className="text-xs font-semibold text-[#3478C0] hover:underline whitespace-nowrap"
+                    className="text-xs font-semibold text-[#0A66C2] hover:underline whitespace-nowrap"
                   >
                     Copy link
                   </button>
@@ -316,7 +316,7 @@ function ManageTeam({ data }: { data: TeamData }) {
 function RoleBadge({ role }: { role: string }) {
   const map: Record<string, string> = {
     OWNER: "bg-gray-900 text-white",
-    ADMIN: "bg-[#3478C0] text-white",
+    ADMIN: "bg-[#0A66C2] text-white",
     MEMBER: "bg-gray-100 text-gray-600",
   };
   return (
