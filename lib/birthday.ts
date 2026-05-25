@@ -173,3 +173,18 @@ export const CARD_TONES: { key: CardTone; label: string }[] = [
 ];
 
 export const DEFAULT_CARD_TONE: CardTone = "warm";
+
+// =========================================================================
+// Cartoon "scene" — what the picture should be (client-safe labels)
+// =========================================================================
+
+export type CartoonScene = "portrait" | "silhouette" | "silhouette-cake" | "custom";
+
+export const CARTOON_SCENES: { key: CartoonScene; label: string }[] = [
+  { key: "portrait", label: "Cartoon portrait" },
+  { key: "silhouette", label: "Silhouette" },
+  { key: "silhouette-cake", label: "Silhouette + cake" },
+  { key: "custom", label: "Something else…" },
+];
+
+export const DEFAULT_CARTOON_SCENE: CartoonScene = "portrait";

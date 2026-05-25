@@ -16,11 +16,14 @@ import {
   CARD_TONES,
   DEFAULT_CARTOON_STYLE,
   DEFAULT_CARD_TONE,
+  CARTOON_SCENES,
+  DEFAULT_CARTOON_SCENE,
   firstName,
   birthdayMessage,
   type GroupKey,
   type CartoonStyle,
   type CardTone,
+  type CartoonScene,
 } from "@/lib/birthday";
 import {
   generateCartoonForContact,
@@ -53,6 +56,8 @@ export function CardStudioClient({ contact }: { contact: StudioContact }) {
   const [style, setStyle] = useState<CartoonStyle>(
     (contact.cartoonStyle as CartoonStyle) || DEFAULT_CARTOON_STYLE,
   );
+  const [scene, setScene] = useState<CartoonScene>(DEFAULT_CARTOON_SCENE);
+  const [customDesc, setCustomDesc] = useState("");
   const [message, setMessage] = useState<string>(
     contact.cardMessage?.trim() || birthdayMessage(contact.group, contact.name),
   );
@@ -98,12 +103,25 @@ export function CardStudioClient({ contact }: { contact: StudioContact }) {
       setError("Upload a photo first.");
       return;
     }
+    if (scene === "custom" && !customDesc.trim()) {
+      setError("Describe what you'd like the picture to be.");
+      return;
+    }
     setError(null);
     setGenerating(true);
     try {
-      const res = await generateCartoonForContact(contact.id, style);
-      setCartoonUrl(res.url);
-      flash("Cartoon ready!");
+      const res = await generateCartoonForContact({
+        contactId: contact.id,
+        style,
+        scene,
+        customPrompt: customDesc,
+      });
+      if (res.ok) {
+        setCartoonUrl(res.url);
+        flash("Cartoon ready!");
+      } else {
+        setError(res.error);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't generate the cartoon.");
     } finally {
@@ -116,8 +134,12 @@ export function CardStudioClient({ contact }: { contact: StudioContact }) {
     setWriting(true);
     try {
       const res = await generateCardWordsForContact({ contactId: contact.id, tone, notes });
-      setMessage(res.message);
-      flash("Words drafted");
+      if (res.ok) {
+        setMessage(res.message);
+        flash("Words drafted");
+      } else {
+        setError(res.error);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't write the words.");
     } finally {
@@ -211,8 +233,42 @@ export function CardStudioClient({ contact }: { contact: StudioContact }) {
             <section>
               <div className="mb-3 flex items-center gap-2">
                 <span className={stepNum} style={{ background: ROSE_GRADIENT }}>2</span>
-                <h2 className="text-lg font-bold text-gray-900">Pick a style &amp; create the cartoon</h2>
+                <h2 className="text-lg font-bold text-gray-900">Choose the image &amp; create it</h2>
               </div>
+
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">What should the picture be?</p>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {CARTOON_SCENES.map((sc) => (
+                  <button
+                    key={sc.key}
+                    type="button"
+                    onClick={() => setScene(sc.key)}
+                    className={
+                      "rounded-xl border px-3 py-2.5 text-sm font-semibold transition " +
+                      (scene === sc.key
+                        ? "border-rose-400 bg-rose-50 text-rose-700 ring-2 ring-rose-100"
+                        : "border-gray-200 bg-white text-gray-600 hover:border-rose-200")
+                    }
+                  >
+                    {sc.label}
+                  </button>
+                ))}
+              </div>
+
+              {scene === "custom" && (
+                <div className="mt-3">
+                  <input
+                    type="text"
+                    value={customDesc}
+                    onChange={(e) => setCustomDesc(e.target.value)}
+                    placeholder="e.g. riding a bike through a confetti parade"
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
+                  />
+                  <p className="mt-1 text-xs text-gray-400">Keep it friendly — no R-rated images.</p>
+                </div>
+              )}
+
+              <p className="mb-2 mt-5 text-xs font-semibold uppercase tracking-wide text-gray-400">Art style</p>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {CARTOON_STYLES.map((s) => (
                   <button
@@ -244,7 +300,7 @@ export function CardStudioClient({ contact }: { contact: StudioContact }) {
                 ) : (
                   <Wand2 className="h-4 w-4" />
                 )}
-                {generating ? "Creating cartoon…" : cartoonUrl ? "Regenerate cartoon" : "Create cartoon"}
+                {generating ? "Creating image…" : cartoonUrl ? "Regenerate image" : "Create image"}
               </button>
               {!photoUrl && (
                 <p className="mt-2 text-xs text-gray-400">Upload a photo above to enable this.</p>
