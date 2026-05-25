@@ -213,7 +213,7 @@ function VerificationRecord({ verifications, repName }: { verifications: Verific
 }
 
 function VerifierRow({ v }: { v: VerificationRequest }) {
-  const displayName = v.verifierName?.trim() || maskEmail(v.verifierEmail);
+  const displayName = v.verifierName?.trim() || v.verifierEmail.split("@")[0];
   const initials = getInitials(v.verifierName || v.verifierEmail);
   const rel = v.relationship ? capitalize(v.relationship) : "Contact";
   const date = v.respondedAt ? new Date(v.respondedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "";
@@ -224,6 +224,7 @@ function VerifierRow({ v }: { v: VerificationRequest }) {
       <div className="flex-1 min-w-0">
         <div className="font-bold text-gray-900 truncate">{displayName}</div>
         <div className="text-xs text-gray-500">{rel} · verified {periods}</div>
+        <a href={`mailto:${v.verifierEmail}`} className="text-xs font-medium text-emerald-700 hover:underline truncate block mt-0.5">{v.verifierEmail}</a>
       </div>
       <div className="hidden sm:block text-right text-xs text-gray-500 whitespace-nowrap">
         <div className="flex items-center gap-1 text-emerald-600 font-bold justify-end mb-0.5">
@@ -243,13 +244,6 @@ function getInitials(s: string): string {
   if (parts.length === 0) return "?";
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[1][0]).toUpperCase();
-}
-
-function maskEmail(email: string): string {
-  const [u, d] = email.split("@");
-  if (!d) return "Anonymous verifier";
-  const shown = u.slice(0, Math.min(2, u.length));
-  return `${shown}${u.length > 2 ? "•••" : ""}@${d}`;
 }
 
 function capitalize(s: string): string {
