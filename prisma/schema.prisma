@@ -309,6 +309,50 @@ model BirthdayContact {
   updatedAt      DateTime      @updatedAt
 
   user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dispatches     BirthdayDispatch[]
 
   @@index([userId, group])
+}
+
+
+// =================== Birthday auto-send (daily cron) ===================
+// One BirthdayDispatch row per contact per birthday-year. Tracks the
+// approval-first lifecycle: we email the rep to approve a few days early,
+// then send the greeting to the recipient on the day — but only if approved.
+
+enum DispatchStatus {
+  PENDING_APPROVAL  // approval email sent to the rep, awaiting their decision
+  APPROVED          // rep approved — greeting will send (or has sent) on the day
+  SKIPPED           // rep skipped, or approval window lapsed without a decision
+  SENT              // greeting delivered to the recipient
+  FAILED            // send attempt errored (see failReason)
+}
+
+model BirthdayDispatch {
+  id             String          @id @default(cuid())
+  contactId      String
+  userId         String          // denormalized: the rep who owns the contact
+  year           Int             // calendar year of the birthday occurrence this covers
+  token          String          @unique @default(cuid())  // used in /birthday/[token]
+
+  message        String          @db.Text                  // proposed message (rep may edit on approval)
+  group          BirthdayGroup
+  includeGift    Boolean         @default(false)
+  includeCartoon Boolean         @default(false)
+  giftLabel      String?
+
+  status         DispatchStatus  @default(PENDING_APPROVAL)
+  approvalSentAt DateTime?
+  approvedAt     DateTime?
+  sentAt         DateTime?
+  failReason     String?         @db.Text
+
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  contact        BirthdayContact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@unique([contactId, year])
+  @@index([status])
+  @@index([userId])
 }
