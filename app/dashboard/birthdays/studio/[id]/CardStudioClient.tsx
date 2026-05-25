@@ -12,18 +12,15 @@ import {
   RefreshCw,
 } from "lucide-react";
 import {
-  CARTOON_STYLES,
+  CARD_LOOKS,
+  DEFAULT_CARD_LOOK,
   CARD_TONES,
-  DEFAULT_CARTOON_STYLE,
   DEFAULT_CARD_TONE,
-  CARTOON_SCENES,
-  DEFAULT_CARTOON_SCENE,
   firstName,
   birthdayMessage,
   type GroupKey,
-  type CartoonStyle,
   type CardTone,
-  type CartoonScene,
+  type CardLook,
 } from "@/lib/birthday";
 import {
   generateCartoonForContact,
@@ -78,10 +75,9 @@ export function CardStudioClient({ contact }: { contact: StudioContact }) {
 
   const [photoUrl, setPhotoUrl] = useState<string | null>(contact.photoUrl);
   const [cartoonUrl, setCartoonUrl] = useState<string | null>(contact.cartoonUrl);
-  const [style, setStyle] = useState<CartoonStyle>(
-    (contact.cartoonStyle as CartoonStyle) || DEFAULT_CARTOON_STYLE,
+  const [look, setLook] = useState<CardLook>(
+    contact.cartoonStyle === "original" ? "original" : DEFAULT_CARD_LOOK,
   );
-  const [scene, setScene] = useState<CartoonScene>(DEFAULT_CARTOON_SCENE);
   const [customDesc, setCustomDesc] = useState("");
   const [message, setMessage] = useState<string>(
     contact.cardMessage?.trim() || birthdayMessage(contact.group, contact.name),
@@ -151,17 +147,18 @@ export function CardStudioClient({ contact }: { contact: StudioContact }) {
       setError("Upload a photo first.");
       return;
     }
-    if (scene === "custom" && style !== "original" && !customDesc.trim()) {
+    if (look === "custom" && !customDesc.trim()) {
       setError("Describe what you'd like the picture to be.");
       return;
     }
+    const selected = CARD_LOOKS.find((l) => l.key === look) ?? CARD_LOOKS[0];
     setError(null);
     setGenerating(true);
     try {
       const res = await generateCartoonForContact({
         contactId: contact.id,
-        style,
-        scene,
+        style: selected.style,
+        scene: selected.scene,
         customPrompt: customDesc,
       });
       if (res.ok) {
@@ -285,25 +282,25 @@ export function CardStudioClient({ contact }: { contact: StudioContact }) {
               </div>
 
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">What should the picture be?</p>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {CARTOON_SCENES.map((sc) => (
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {CARD_LOOKS.map((l) => (
                   <button
-                    key={sc.key}
+                    key={l.key}
                     type="button"
-                    onClick={() => setScene(sc.key)}
+                    onClick={() => setLook(l.key)}
                     className={
                       "rounded-xl border px-3 py-2.5 text-sm font-semibold transition " +
-                      (scene === sc.key
+                      (look === l.key
                         ? "border-rose-400 bg-rose-50 text-rose-700 ring-2 ring-rose-100"
                         : "border-gray-200 bg-white text-gray-600 hover:border-rose-200")
                     }
                   >
-                    {sc.label}
+                    {l.label}
                   </button>
                 ))}
               </div>
 
-              {scene === "custom" && (
+              {look === "custom" && (
                 <div className="mt-3">
                   <input
                     type="text"
@@ -316,25 +313,7 @@ export function CardStudioClient({ contact }: { contact: StudioContact }) {
                 </div>
               )}
 
-              <p className="mb-2 mt-5 text-xs font-semibold uppercase tracking-wide text-gray-400">Art style</p>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {CARTOON_STYLES.map((s) => (
-                  <button
-                    key={s.key}
-                    type="button"
-                    onClick={() => setStyle(s.key)}
-                    className={
-                      "rounded-xl border px-3 py-2.5 text-sm font-semibold transition " +
-                      (style === s.key
-                        ? "border-rose-400 bg-rose-50 text-rose-700 ring-2 ring-rose-100"
-                        : "border-gray-200 bg-white text-gray-600 hover:border-rose-200")
-                    }
-                  >
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-              {style === "original" && (
+              {look === "original" && (
                 <p className="mt-2 text-xs text-gray-400">Uses your uploaded photo as the card image — no AI changes.</p>
               )}
               <button
@@ -351,7 +330,7 @@ export function CardStudioClient({ contact }: { contact: StudioContact }) {
                 ) : (
                   <Wand2 className="h-4 w-4" />
                 )}
-                {generating ? (style === "original" ? "Using photo…" : "Creating image…") : style === "original" ? "Use original photo" : cartoonUrl ? "Regenerate image" : "Create image"}
+                {generating ? (look === "original" ? "Using photo…" : "Creating image…") : look === "original" ? "Use original photo" : cartoonUrl ? "Regenerate image" : "Create image"}
               </button>
               {!photoUrl && (
                 <p className="mt-2 text-xs text-gray-400">Upload a photo above to enable this.</p>
