@@ -72,7 +72,7 @@ export default async function AnalyticsPage() {
   return (
     <div className="max-w-5xl mx-auto px-6 py-12">
       <div className="mb-8">
-        <div className="text-xs tracking-widest font-bold text-[#3478C0] uppercase mb-1">
+        <div className="text-xs tracking-widest font-bold text-[#0A66C2] uppercase mb-1">
           Analytics
         </div>
         <h1 className="text-3xl font-black tracking-tight">{ctx.name}</h1>
@@ -107,7 +107,7 @@ export default async function AnalyticsPage() {
           <p className="text-gray-600 text-sm max-w-md mx-auto">
             As sales reps flip on <span className="font-semibold">&ldquo;Show me to recruiters&rdquo;</span>{" "}
             from their dashboard, they&apos;ll appear here and in your{" "}
-            <Link href="/recruiter" className="text-[#3478C0] hover:underline">talent search</Link>.
+            <Link href="/recruiter" className="text-[#0A66C2] hover:underline">talent search</Link>.
           </p>
         </div>
       ) : (
@@ -117,7 +117,7 @@ export default async function AnalyticsPage() {
             <div className="text-sm font-bold text-gray-700 mb-4">Pool by role</div>
             <div className="space-y-3">
               {roleRows.map((r) => (
-                <BarRow key={r.label} label={r.label} count={r.count} total={total} color="#3478C0" />
+                <BarRow key={r.label} label={r.label} count={r.count} total={total} color="#0A66C2" />
               ))}
             </div>
           </div>
@@ -144,7 +144,7 @@ export default async function AnalyticsPage() {
       <div className="bg-white border border-gray-200 rounded-2xl p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="text-sm font-bold text-gray-700">Team ({ctx.members.length})</div>
-          <Link href="/recruiter/team" className="text-sm font-semibold text-[#3478C0] hover:underline">
+          <Link href="/recruiter/team" className="text-sm font-semibold text-[#0A66C2] hover:underline">
             Manage team →
           </Link>
         </div>

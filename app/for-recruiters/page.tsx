@@ -20,11 +20,11 @@ export default async function ForRecruitersPage() {
   return (
     <main className="min-h-screen bg-white flex items-center justify-center p-6">
       <div className="max-w-md w-full text-center">
-        <div className="text-xs tracking-widest font-bold text-[#3478C0] uppercase mb-3">
+        <div className="text-xs tracking-widest font-bold text-[#0A66C2] uppercase mb-3">
           For recruiters
         </div>
         <h1 className="text-4xl font-black tracking-tight">
-          <span className="text-[#3478C0]">Sales</span>
+          <span className="text-[#0A66C2]">Sales</span>
           <span className="text-[#10B981]">Card</span>
         </h1>
         <p className="text-gray-600 mt-3 mb-10">
@@ -83,7 +83,7 @@ export default async function ForRecruitersPage() {
         )}
 
         <div className="mt-12 text-sm">
-          <a href="https://salescard.ai" className="text-gray-500 hover:text-[#3478C0]">
+          <a href="https://salescard.ai" className="text-gray-500 hover:text-[#0A66C2]">
             ← Back to salescard.ai
           </a>
         </div>

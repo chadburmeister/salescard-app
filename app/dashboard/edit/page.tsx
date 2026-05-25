@@ -50,7 +50,7 @@ export default async function EditPage() {
   return (
     <main className="min-h-screen bg-white">
       <div className="max-w-5xl mx-auto px-6 py-12">
-        <Link href="/dashboard" className="text-sm text-gray-500 hover:text-[#3478C0]">← Back to dashboard</Link>
+        <Link href="/dashboard" className="text-sm text-gray-500 hover:text-[#0A66C2]">← Back to dashboard</Link>
         <h1 className="text-3xl font-black tracking-tight mt-3 mb-2">Edit your stats</h1>
         <p className="text-gray-600 mb-8">Update any quarter. We&apos;ll recalculate your score on save.</p>
         <KpiForm

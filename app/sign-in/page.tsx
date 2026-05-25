@@ -34,7 +34,7 @@ export default function SignInPage() {
         </p>
 
         <div className="mt-12 text-sm">
-          <a href="https://salescard.ai" className="text-gray-500 hover:text-[#3478C0]">
+          <a href="https://salescard.ai" className="text-gray-500 hover:text-[#0A66C2]">
             ← Back to salescard.ai
           </a>
         </div>

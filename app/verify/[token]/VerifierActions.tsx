@@ -115,7 +115,7 @@ export function VerifierActions({ token, repName }: Props) {
               onChange={e => setRejectionReason(e.target.value)}
               rows={3}
               placeholder="e.g. Q4 closed-won looks higher than what I remember"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-[#3478C0] bg-white"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-[#0A66C2] bg-white"
             />
           </label>
           <div className="flex items-center justify-end gap-2 mt-3">

@@ -15,7 +15,7 @@ function Shell({ children }: { children: React.ReactNode }) {
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <Link href="/" className="font-black text-xl tracking-tight">
-            <span className="text-[#3478C0]">Sales</span>
+            <span className="text-[#0A66C2]">Sales</span>
             <span className="text-[#10B981]">Card</span>
           </Link>
         </div>
@@ -94,7 +94,7 @@ export default async function JoinPage({ params }: PageProps) {
     return (
       <Shell>
         <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm text-center">
-          <div className="text-xs tracking-widest font-bold text-[#3478C0] uppercase mb-2">
+          <div className="text-xs tracking-widest font-bold text-[#0A66C2] uppercase mb-2">
             Team invitation
           </div>
           <h1 className="text-xl font-black tracking-tight mb-2">

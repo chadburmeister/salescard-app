@@ -84,7 +84,7 @@ export function RequestVerificationDialog({
       <button
         type="button"
         onClick={openDialog}
-        className="inline-flex items-center gap-2 bg-white border border-gray-300 hover:border-[#3478C0] hover:text-[#3478C0] text-gray-700 font-semibold px-5 py-2.5 rounded-full transition"
+        className="inline-flex items-center gap-2 bg-white border border-gray-300 hover:border-[#0A66C2] hover:text-[#0A66C2] text-gray-700 font-semibold px-5 py-2.5 rounded-full transition"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
           <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
@@ -123,14 +123,14 @@ export function RequestVerificationDialog({
                 <button
                   type="button"
                   onClick={closeDialog}
-                  className="mt-6 inline-flex items-center gap-2 bg-[#3478C0] hover:bg-[#1E5A9C] text-white font-semibold px-6 py-2.5 rounded-full transition"
+                  className="mt-6 inline-flex items-center gap-2 bg-[#0A66C2] hover:bg-[#1E5A9C] text-white font-semibold px-6 py-2.5 rounded-full transition"
                 >
                   Done
                 </button>
               </div>
             ) : (
               <>
-                <div className="text-xs tracking-widest font-bold text-[#3478C0] uppercase mb-2">Verification</div>
+                <div className="text-xs tracking-widest font-bold text-[#0A66C2] uppercase mb-2">Verification</div>
                 <h2 className="text-2xl font-black tracking-tight mb-1">Who can verify your numbers?</h2>
                 <p className="text-gray-600 text-sm mb-5">
                   We&apos;ll send them an email with your numbers and a one-click confirm link. No login required for them.
@@ -145,7 +145,7 @@ export function RequestVerificationDialog({
                       placeholder="manager@yourcompany.com"
                       value={verifierEmail}
                       onChange={e => setVerifierEmail(e.target.value)}
-                      className="w-full rounded-xl border border-gray-300 px-4 py-2.5 focus:outline-none focus:border-[#3478C0]"
+                      className="w-full rounded-xl border border-gray-300 px-4 py-2.5 focus:outline-none focus:border-[#0A66C2]"
                     />
                   </label>
 
@@ -156,7 +156,7 @@ export function RequestVerificationDialog({
                       placeholder="e.g. Jordan Smith"
                       value={verifierName}
                       onChange={e => setVerifierName(e.target.value)}
-                      className="w-full rounded-xl border border-gray-300 px-4 py-2.5 focus:outline-none focus:border-[#3478C0]"
+                      className="w-full rounded-xl border border-gray-300 px-4 py-2.5 focus:outline-none focus:border-[#0A66C2]"
                     />
                   </label>
 
@@ -165,7 +165,7 @@ export function RequestVerificationDialog({
                     <select
                       value={relationship}
                       onChange={e => setRelationship(e.target.value)}
-                      className="w-full rounded-xl border border-gray-300 px-4 py-2.5 focus:outline-none focus:border-[#3478C0] bg-white"
+                      className="w-full rounded-xl border border-gray-300 px-4 py-2.5 focus:outline-none focus:border-[#0A66C2] bg-white"
                     >
                       <option value="manager">Current or former manager</option>
                       <option value="peer">Peer rep</option>
@@ -220,7 +220,7 @@ export function RequestVerificationDialog({
                     <button
                       type="submit"
                       disabled={submitting || selectedPeriods.size === 0}
-                      className="inline-flex items-center gap-2 bg-[#3478C0] hover:bg-[#1E5A9C] disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold px-6 py-2.5 rounded-full transition"
+                      className="inline-flex items-center gap-2 bg-[#0A66C2] hover:bg-[#1E5A9C] disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold px-6 py-2.5 rounded-full transition"
                     >
                       {submitting ? "Sending..." : "Send verification email →"}
                     </button>

@@ -79,13 +79,13 @@ export default async function RecruiterSearchPage({ searchParams }: PageProps) {
       <header className="sticky top-0 z-40 bg-white/85 backdrop-blur border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/recruiter" className="font-black text-xl tracking-tight">
-            <span className="text-[#3478C0]">Sales</span><span className="text-[#10B981]">Card</span>
+            <span className="text-[#0A66C2]">Sales</span><span className="text-[#10B981]">Card</span>
             <span className="ml-2 text-xs font-bold tracking-widest text-gray-400 uppercase">Recruiter</span>
           </Link>
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-500 hidden sm:inline">{me.name ?? me.email}</span>
             <form action={async () => { "use server"; await signOut({ redirectTo: "/" }); }}>
-              <button type="submit" className="text-sm font-semibold text-gray-700 hover:text-[#3478C0]">Sign out</button>
+              <button type="submit" className="text-sm font-semibold text-gray-700 hover:text-[#0A66C2]">Sign out</button>
             </form>
           </div>
         </div>
@@ -93,7 +93,7 @@ export default async function RecruiterSearchPage({ searchParams }: PageProps) {
 
       <main className="max-w-6xl mx-auto px-6 py-10">
         <div className="mb-8">
-          <div className="text-xs tracking-widest font-bold text-[#3478C0] uppercase mb-1">Verified rep search</div>
+          <div className="text-xs tracking-widest font-bold text-[#0A66C2] uppercase mb-1">Verified rep search</div>
           <h1 className="text-3xl font-black tracking-tight">Find verified sales talent.</h1>
           <p className="text-gray-600 mt-1">Every rep here has opted in and uploaded a verified record. Filter by role, score, and segment.</p>
         </div>
@@ -102,26 +102,26 @@ export default async function RecruiterSearchPage({ searchParams }: PageProps) {
         <form method="get" className="bg-white border border-gray-200 rounded-2xl p-5 mb-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
           <label className="block">
             <div className="text-[11px] font-black tracking-widest text-gray-500 uppercase mb-1.5">Role</div>
-            <select name="role" defaultValue={role} className="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-[#3478C0]">
+            <select name="role" defaultValue={role} className="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-[#0A66C2]">
               {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
             </select>
           </label>
           <label className="block">
             <div className="text-[11px] font-black tracking-widest text-gray-500 uppercase mb-1.5">Min score</div>
-            <input type="number" name="minScore" defaultValue={minScore ?? ""} min={0} max={100} placeholder="0" className="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-[#3478C0]" />
+            <input type="number" name="minScore" defaultValue={minScore ?? ""} min={0} max={100} placeholder="0" className="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-[#0A66C2]" />
           </label>
           <label className="block">
             <div className="text-[11px] font-black tracking-widest text-gray-500 uppercase mb-1.5">Segment</div>
-            <select name="segment" defaultValue={segment} className="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-[#3478C0]">
+            <select name="segment" defaultValue={segment} className="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-[#0A66C2]">
               <option value="">Any segment</option>
               {SEGMENTS.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </label>
           <label className="block">
             <div className="text-[11px] font-black tracking-widest text-gray-500 uppercase mb-1.5">Name or company</div>
-            <input type="text" name="q" defaultValue={q} placeholder="Search…" className="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-[#3478C0]" />
+            <input type="text" name="q" defaultValue={q} placeholder="Search…" className="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-[#0A66C2]" />
           </label>
-          <button type="submit" className="bg-[#3478C0] hover:bg-[#1E5A9C] text-white font-bold px-5 py-2.5 rounded-xl transition">
+          <button type="submit" className="bg-[#0A66C2] hover:bg-[#1E5A9C] text-white font-bold px-5 py-2.5 rounded-xl transition">
             Search
           </button>
         </form>
@@ -154,7 +154,7 @@ export default async function RecruiterSearchPage({ searchParams }: PageProps) {
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={u.image} alt={name} className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-[#3478C0] to-[#10B981] text-white font-black flex items-center justify-center text-sm">
+                        <div className="w-full h-full bg-gradient-to-br from-[#0A66C2] to-[#10B981] text-white font-black flex items-center justify-center text-sm">
                           {getInitials(name)}
                         </div>
                       )}
@@ -176,7 +176,7 @@ export default async function RecruiterSearchPage({ searchParams }: PageProps) {
                         {tier.name}
                       </div>
                     </div>
-                    <span className="text-sm font-semibold text-[#3478C0]">View card →</span>
+                    <span className="text-sm font-semibold text-[#0A66C2]">View card →</span>
                   </div>
                 </Link>
               );

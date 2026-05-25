@@ -92,7 +92,7 @@ export async function sendVerificationRequest(p: VerificationEmailPayload): Prom
 <div style="max-width:580px;margin:32px auto;background:white;border-radius:16px;padding:36px 32px;">
   <div style="margin-bottom:24px;">
     <span style="font-weight:900;font-size:22px;letter-spacing:-0.02em;">
-      <span style="color:#3478C0;">Sales</span><span style="color:#10B981;">Card</span>
+      <span style="color:#0A66C2;">Sales</span><span style="color:#10B981;">Card</span>
     </span>
   </div>
   <h1 style="font-size:22px;line-height:1.2;letter-spacing:-0.02em;font-weight:900;margin:0 0 12px;">
@@ -120,7 +120,7 @@ export async function sendVerificationRequest(p: VerificationEmailPayload): Prom
     `).join("")}
   </div>
   <div style="margin:28px 0;text-align:center;">
-    <a href="${url}" style="display:inline-block;background:#3478C0;color:white;font-weight:700;font-size:15px;padding:14px 28px;border-radius:999px;text-decoration:none;">
+    <a href="${url}" style="display:inline-block;background:#0A66C2;color:white;font-weight:700;font-size:15px;padding:14px 28px;border-radius:999px;text-decoration:none;">
       Confirm or flag these numbers
     </a>
   </div>
@@ -170,7 +170,7 @@ export async function sendVerificationResult(p: VerificationResultPayload): Prom
 <html><body style="margin:0;padding:0;background:#fafafa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#111827;">
 <div style="max-width:560px;margin:32px auto;background:white;border-radius:16px;padding:36px 32px;">
   <div style="margin-bottom:24px;font-weight:900;font-size:22px;letter-spacing:-0.02em;">
-    <span style="color:#3478C0;">Sales</span><span style="color:#10B981;">Card</span>
+    <span style="color:#0A66C2;">Sales</span><span style="color:#10B981;">Card</span>
   </div>
   ${p.approved ? `
     <h1 style="font-size:22px;line-height:1.2;font-weight:900;margin:0 0 12px;">
@@ -193,7 +193,7 @@ export async function sendVerificationResult(p: VerificationResultPayload): Prom
     </p>
   `}
   <div style="margin:24px 0 0;text-align:center;">
-    <a href="${p.cardUrl}" style="display:inline-block;background:#3478C0;color:white;font-weight:700;padding:12px 24px;border-radius:999px;text-decoration:none;">
+    <a href="${p.cardUrl}" style="display:inline-block;background:#0A66C2;color:white;font-weight:700;padding:12px 24px;border-radius:999px;text-decoration:none;">
       View my SalesCard →
     </a>
   </div>
@@ -237,7 +237,7 @@ export async function sendOrgInvite(p: OrgInviteEmailPayload): Promise<void> {
 <html><body style="margin:0;padding:0;background:#fafafa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#111827;">
 <div style="max-width:560px;margin:32px auto;background:white;border-radius:16px;padding:36px 32px;">
   <div style="margin-bottom:24px;font-weight:900;font-size:22px;letter-spacing:-0.02em;">
-    <span style="color:#3478C0;">Sales</span><span style="color:#10B981;">Card</span>
+    <span style="color:#0A66C2;">Sales</span><span style="color:#10B981;">Card</span>
   </div>
   <h1 style="font-size:22px;line-height:1.2;letter-spacing:-0.02em;font-weight:900;margin:0 0 12px;">
     Join ${escapeHtml(p.orgName)} on SalesCard
@@ -246,7 +246,7 @@ export async function sendOrgInvite(p: OrgInviteEmailPayload): Promise<void> {
     ${escapeHtml(intro)}
   </p>
   <div style="margin:28px 0;text-align:center;">
-    <a href="${url}" style="display:inline-block;background:#3478C0;color:white;font-weight:700;font-size:15px;padding:14px 28px;border-radius:999px;text-decoration:none;">
+    <a href="${url}" style="display:inline-block;background:#0A66C2;color:white;font-weight:700;font-size:15px;padding:14px 28px;border-radius:999px;text-decoration:none;">
       Accept invitation
     </a>
   </div>

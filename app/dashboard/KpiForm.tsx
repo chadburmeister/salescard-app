@@ -106,7 +106,7 @@ export function KpiForm({ quarters, initialRole, initialData }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="bg-white border border-gray-200 rounded-2xl p-5">
-        <div className="text-xs font-black tracking-widest text-[#3478C0] uppercase mb-3">Your role</div>
+        <div className="text-xs font-black tracking-widest text-[#0A66C2] uppercase mb-3">Your role</div>
         <div className="flex flex-wrap gap-2">
           {ROLE_BUTTONS.map(({ value, label }) => (
             <button
@@ -115,7 +115,7 @@ export function KpiForm({ quarters, initialRole, initialData }: Props) {
               onClick={() => setRole(value)}
               className={`px-5 py-2.5 rounded-full font-bold text-sm transition border ${
                 role === value
-                  ? "bg-[#3478C0] text-white border-[#3478C0]"
+                  ? "bg-[#0A66C2] text-white border-[#0A66C2]"
                   : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
               }`}
             >
@@ -128,7 +128,7 @@ export function KpiForm({ quarters, initialRole, initialData }: Props) {
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between flex-wrap gap-2">
           <div>
-            <div className="text-xs font-black tracking-widest text-[#3478C0] uppercase mb-0.5">Your stats</div>
+            <div className="text-xs font-black tracking-widest text-[#0A66C2] uppercase mb-0.5">Your stats</div>
             <div className="text-sm text-gray-600">Click any cell to edit. Leave blank if you don&apos;t have the number.</div>
           </div>
         </div>
@@ -254,7 +254,7 @@ export function KpiForm({ quarters, initialRole, initialData }: Props) {
         <button
           type="submit"
           disabled={isPending}
-          className="inline-flex items-center gap-2 bg-[#3478C0] hover:bg-[#1E5A9C] disabled:opacity-60 text-white font-bold px-7 py-3.5 rounded-full transition"
+          className="inline-flex items-center gap-2 bg-[#0A66C2] hover:bg-[#1E5A9C] disabled:opacity-60 text-white font-bold px-7 py-3.5 rounded-full transition"
         >
           {isPending ? "Saving…" : "Save & calculate my score →"}
         </button>
@@ -280,7 +280,7 @@ export function KpiForm({ quarters, initialRole, initialData }: Props) {
         :global(.cell-input):focus,
         :global(.cell-select):focus {
           outline: none;
-          border-color: #3478c0;
+          border-color: #0A66C2;
           background: white;
           box-shadow: 0 0 0 2px rgba(52, 120, 192, 0.12);
         }

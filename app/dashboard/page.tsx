@@ -47,7 +47,7 @@ export default async function DashboardPage() {
       <main className="min-h-screen bg-white">
         <div className="max-w-5xl mx-auto px-6 py-12">
           <div className="mb-8">
-            <div className="text-xs tracking-widest font-bold text-[#3478C0] uppercase mb-2">Step 1 of 1</div>
+            <div className="text-xs tracking-widest font-bold text-[#0A66C2] uppercase mb-2">Step 1 of 1</div>
             <h1 className="text-4xl font-black tracking-tight mb-3">
               Welcome, {firstName(user.name ?? user.email)}.
             </h1>
@@ -72,20 +72,20 @@ function DashboardHeader({ name, isRecruiter }: { name: string; isRecruiter?: bo
           <Logo className="text-xl" />
         </Link>
         <div className="flex items-center gap-4">
-          <Link href="/coach" className="text-sm font-semibold text-gray-700 hover:text-[#3478C0]">
+          <Link href="/coach" className="text-sm font-semibold text-gray-700 hover:text-[#0A66C2]">
             Goals
           </Link>
-          <Link href="/dashboard/birthdays" className="text-sm font-semibold text-gray-700 hover:text-[#3478C0]">
+          <Link href="/dashboard/birthdays" className="text-sm font-semibold text-gray-700 hover:text-[#0A66C2]">
             Birthdays
           </Link>
           {isRecruiter && (
-            <Link href="/recruiter" className="text-sm font-semibold text-[#3478C0] hover:underline">
+            <Link href="/recruiter" className="text-sm font-semibold text-[#0A66C2] hover:underline">
               Recruiter workspace →
             </Link>
           )}
           <span className="text-sm text-gray-500 hidden sm:inline">{name}</span>
           <form action={async () => { "use server"; await signOut({ redirectTo: "/" }); }}>
-            <button type="submit" className="text-sm font-semibold text-gray-700 hover:text-[#3478C0]">
+            <button type="submit" className="text-sm font-semibold text-gray-700 hover:text-[#0A66C2]">
               Sign out
             </button>
           </form>

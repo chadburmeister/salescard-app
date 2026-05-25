@@ -154,7 +154,7 @@ export default async function Image({ params }: Props) {
             }}
           >
             <div style={{ fontSize: 40, fontWeight: 900, letterSpacing: -1.5, display: "flex" }}>
-              <span style={{ color: "#3478C0" }}>Sales</span>
+              <span style={{ color: "#0A66C2" }}>Sales</span>
               <span style={{ color: "#10B981" }}>Card</span>
             </div>
             {verifierCount > 0 ? (
@@ -212,7 +212,7 @@ export default async function Image({ params }: Props) {
             }}
           >
             <span style={{ display: "flex" }}>app.salescard.ai/u/{username}</span>
-            <span style={{ display: "flex", fontWeight: 700, color: "#3478C0" }}>
+            <span style={{ display: "flex", fontWeight: 700, color: "#0A66C2" }}>
               The verified sales record →
             </span>
           </div>
@@ -229,7 +229,7 @@ function GenericFallback() {
       style={{
         height: "100%",
         width: "100%",
-        background: "linear-gradient(135deg, #3478C0 0%, #10B981 100%)",
+        background: "linear-gradient(135deg, #0A66C2 0%, #10B981 100%)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",

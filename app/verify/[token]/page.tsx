@@ -44,7 +44,7 @@ export default async function VerifyTokenPage({ params }: PageProps) {
         {/* brand header */}
         <div className="text-center mb-10">
           <Link href="/" className="font-black text-2xl tracking-tight">
-            <span className="text-[#3478C0]">Sales</span>
+            <span className="text-[#0A66C2]">Sales</span>
             <span className="text-[#10B981]">Card</span>
           </Link>
         </div>
@@ -59,7 +59,7 @@ export default async function VerifyTokenPage({ params }: PageProps) {
             />
           ) : (
             <>
-              <div className="text-xs tracking-widest font-bold text-[#3478C0] uppercase mb-2">
+              <div className="text-xs tracking-widest font-bold text-[#0A66C2] uppercase mb-2">
                 Verification request
               </div>
               <h1 className="text-2xl font-black tracking-tight mb-2">
