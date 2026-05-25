@@ -46,7 +46,7 @@ export function SalesCardBack({
 }: Props) {
   const companyLine = company && company !== "—" ? ` · ${company}` : "";
   return (
-    <div className="bg-white border border-[#E2E2E2] rounded-xl overflow-hidden text-[#1B1F23]">
+    <div className="bg-white border border-[#E2E2E2] rounded-xl overflow-hidden flex flex-col min-h-[500px] text-[#1B1F23]">
       <div className="h-[50px] bg-[#0A66C2] flex items-center justify-between px-4">
         <span className="text-white text-[13px] font-semibold">SalesCard</span>
         <span className="text-[#CFE0F5] text-xs">Verified record</span>
