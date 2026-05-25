@@ -334,7 +334,7 @@ export async function sendBirthdayApprovalEmail(p: BirthdayApprovalPayload): Pro
   ].filter(Boolean).join("\n");
 
   const cartoonBlock = p.cartoonUrl
-    ? `<div style="text-align:center;margin:2px 0 18px;"><img src="${p.cartoonUrl}" alt="Birthday cartoon for ${escapeHtml(contactFirst)}" style="max-width:260px;width:100%;border-radius:18px;border:1px solid #FBE4DD;" /></div>`
+    ? `<div style="text-align:center;margin:2px 0 18px;"><img src="${p.cartoonUrl}" alt="Birthday cartoon for ${escapeHtml(contactFirst)}" style="max-width:340px;width:100%;border-radius:18px;border:1px solid #FBE4DD;" /></div>`
     : "";
 
   const html = `<!doctype html><html><body style="margin:0;background:#F8FAFC;font-family:Arial,Helvetica,sans-serif;">
@@ -401,7 +401,7 @@ export async function sendBirthdayGreetingEmail(p: BirthdayGreetingPayload): Pro
 
   const hero = p.cartoonUrl
     ? `<div style="padding:24px 24px 0;text-align:center;">
-         <img src="${p.cartoonUrl}" alt="Happy birthday, ${escapeHtml(recipientFirst)}" style="max-width:320px;width:100%;border-radius:20px;" />
+         <img src="${p.cartoonUrl}" alt="Happy birthday, ${escapeHtml(recipientFirst)}" style="max-width:420px;width:100%;border-radius:20px;" />
        </div>
        <div style="text-align:center;padding:18px 24px 4px;">
          <div style="font-size:26px;font-weight:800;letter-spacing:-0.01em;color:#F43F5E;">Happy Birthday, ${escapeHtml(recipientFirst)}!</div>
