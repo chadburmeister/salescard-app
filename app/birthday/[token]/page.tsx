@@ -73,7 +73,7 @@ export default async function BirthdayApprovalPage({ params }: PageProps) {
                   <img
                     src={dispatch.cartoonUrl}
                     alt={`Cartoon birthday card for ${recipientFirst}`}
-                    className="w-full max-w-[280px] rounded-2xl border"
+                    className="w-full max-w-[340px] rounded-2xl border"
                     style={{ borderColor: "#FBE4DD" }}
                   />
                 </div>

@@ -445,7 +445,7 @@ export function BirthdaysClient({
                   {preview.cartoonUrl ? (
                     <div className="flex flex-col items-center">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={preview.cartoonUrl} alt="" className="h-28 w-28 rounded-2xl object-cover ring-2 ring-rose-100" />
+                      <img src={preview.cartoonUrl} alt="" className="w-full max-w-[260px] rounded-2xl object-cover ring-1 ring-rose-100" />
                       <p className="mt-2 text-xs text-gray-400">Cartoon birthday card</p>
                     </div>
                   ) : preview.includeCartoon ? (
